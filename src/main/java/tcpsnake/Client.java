@@ -1,4 +1,4 @@
-package main.java.tcpsnake;
+package tcpsnake;
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;

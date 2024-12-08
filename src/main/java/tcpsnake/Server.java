@@ -1,4 +1,4 @@
-package main.java.tcpsnake;
+package tcpsnake;
 
 public class Server {
 
