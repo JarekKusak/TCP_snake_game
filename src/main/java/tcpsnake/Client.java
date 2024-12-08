@@ -35,6 +35,88 @@ public class Client {
         setup_game_connection();
     }
 
+    private void setup_game_connection() {
+        try {
+            out.println(nick);
+            CURRENT_PLAYERS = in.readInt();
+            id = in.readInt();
+            for (int i = 0; i < CURRENT_PLAYERS; i++) {
+                player_names[i] = in.readUTF();
+            }
+        } catch (IOException e) {
+            System.err.println("Server disconnected. Exiting...");
+            System.exit(1);
+        }
+    }
+
+    private void receive_game_status() {
+        try {
+            for (int i = 0; i < Common.MATRIX_SIZE; i++) {
+                in.readFully(matrix[i]);
+            }
+            for (int i = 0; i < CURRENT_PLAYERS; i++) {
+                scores[i] = in.readInt();
+            }
+            round_status = in.readByte();
+        } catch (IOException e) {
+            System.err.println("Server disconnected. Exiting...");
+            System.exit(1);
+        }
+    }
+
+    private void render_console() {
+        for (int i = 0; i < Common.MATRIX_SIZE; i++) {
+            for (int j = 0; j < Common.MATRIX_SIZE; j++) {
+                switch (matrix[i][j]) {
+                    case Common.EMPTY:
+                        System.out.print(" . ");
+                        break;
+                    case Common.FRUIT:
+                        System.out.print(" * ");
+                        break;
+                    case Common.FRUIT_SPECIAL:
+                        System.out.print(" @ ");
+                        break;
+                    default:
+                        // Players and their heads
+                        if (matrix[i][j] < Common.P1_HEAD) {
+                            System.out.print(" " + (matrix[i][j] + 1) + " ");
+                        } else {
+                            System.out.print(" H ");
+                        }
+                        break;
+                }
+            }
+            System.out.println();
+        }
+        System.out.println("Scores:");
+        for (int i = 0; i < CURRENT_PLAYERS; i++) {
+            System.out.println(player_names[i] + ": " + scores[i]);
+        }
+    }
+
+    private void handle_input() {
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            String input = scanner.nextLine().toUpperCase();
+            if (input.equals("Q")) {
+                close_and_exit();
+            } else if (input.matches("[WASD]")) {
+                out.println(input);
+            }
+        }
+    }
+
+    private void close_and_exit() {
+        try {
+            in.close();
+            out.close();
+            socket.close();
+        } catch (IOException e) {
+            System.err.println("Error while closing the client.");
+        }
+        System.exit(0);
+    }
 
     public static void main(String[] args) {
         if (args.length != 3) {
