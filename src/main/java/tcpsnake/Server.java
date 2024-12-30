@@ -78,7 +78,7 @@ public class Server {
 
     private void playRound() throws IOException, InterruptedException {
         while (true) {
-            // Process player commands
+            // Zpracování příkazů hráčů
             for (int i = 0; i < connectedPlayers; i++) {
                 String command = playerCommands[i].poll();
                 if (command != null) {
@@ -87,15 +87,12 @@ public class Server {
                 players[i].move(matrix);
             }
 
-            // Check round status
             if (isRoundOver()) {
                 break;
             }
 
-            // Broadcast game state
             broadcastGameState();
 
-            // Slow down game loop
             Thread.sleep(500);
         }
     }
@@ -129,6 +126,15 @@ public class Server {
             }
         }
         Arrays.fill(scores, 0);
+
+        // Reset hráčů do výchozích pozic
+        for (int i = 0; i < connectedPlayers; i++) {
+            if (players[i] != null) {
+                Position startPosition = getPlayerStartingPosition(i);
+                players[i] = new Player(i, startPosition, getPlayerStartingDirection(i));
+                matrix[startPosition.y][startPosition.x] = (byte) i;
+            }
+        }
     }
 
     private Position getPlayerStartingPosition(int playerId) {
@@ -227,39 +233,62 @@ class Position {
 class Player {
     private int id;
     private Position position;
+    private Position previousPosition; // Uchová předchozí pozici
     private Position direction;
     private boolean alive = true;
 
     public Player(int id, Position position, Position direction) {
         this.id = id;
-        this.position = position;
+        this.position = new Position(position.x, position.y);
+        this.previousPosition = new Position(position.x, position.y); // Výchozí pozice
         this.direction = direction;
     }
 
     public void move(byte[][] matrix) {
         if (!alive) return;
+
+        // Smazání předchozí pozice z matice
+        matrix[previousPosition.y][previousPosition.x] = Common.EMPTY;
+
+        // Aktualizace pozice
+        previousPosition.x = position.x;
+        previousPosition.y = position.y;
+
         position.update(direction);
+
+        // Zajištění pohybu v rámci matice (zabalení okrajů)
+        if (position.x < 0) position.x = matrix.length - 1;
+        else if (position.x >= matrix.length) position.x = 0;
+
+        if (position.y < 0) position.y = matrix[0].length - 1;
+        else if (position.y >= matrix[0].length) position.y = 0;
+
+        // Aktualizace nové pozice v matici
         matrix[position.y][position.x] = (byte) id;
     }
 
     public void changeDirection(char input) {
         switch (input) {
             case 'W':
-                direction = new Position(0, -1);
+                direction = new Position(0, -1); // Nahoru
                 break;
             case 'S':
-                direction = new Position(0, 1);
+                direction = new Position(0, 1); // Dolů
                 break;
             case 'A':
-                direction = new Position(-1, 0);
+                direction = new Position(-1, 0); // Vlevo
                 break;
             case 'D':
-                direction = new Position(1, 0);
+                direction = new Position(1, 0); // Vpravo
                 break;
         }
     }
 
     public boolean isAlive() {
         return alive;
+    }
+
+    public void kill() {
+        alive = false;
     }
 }
