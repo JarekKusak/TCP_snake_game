@@ -1,148 +1,92 @@
 package main.java.tcpsnake;
+
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 
 public class Client {
-
     private Socket socket;
     private PrintWriter out;
     private DataInputStream in;
 
     private byte[][] matrix = new byte[Common.MATRIX_SIZE][Common.MATRIX_SIZE];
-    private int id;
-    private String nick;
+    private byte roundStatus;
 
-    private byte round_status;
-    private String[] player_names = new String[Common.MAX_PLAYERS];
-    private int[] scores = new int[Common.MAX_PLAYERS];
-
-    private int CURRENT_PLAYERS;
-
-    public Client(String nick, String hostname, int server_port) {
-        this.nick = nick;
-
+    public Client(String nickname, String hostname, int port) {
         try {
-            this.socket = new Socket(hostname, server_port);
-            this.out = new PrintWriter(socket.getOutputStream(), true);
-            this.in = new DataInputStream(socket.getInputStream());
+            socket = new Socket(hostname, port);
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new DataInputStream(socket.getInputStream());
+            out.println(nickname);
         } catch (IOException e) {
-            System.err.println("Unable to connect to the server. Exiting...");
+            System.err.println("Unable to connect to server.");
             System.exit(1);
         }
-
-        System.out.println("Connected to the server.");
-        setup_game_connection();
+        System.out.println("Connected to server.");
     }
 
-    private void setup_game_connection() {
-        try {
-            out.println(nick);
-            CURRENT_PLAYERS = in.readInt();
-            id = in.readInt();
-            for (int i = 0; i < CURRENT_PLAYERS; i++) {
-                player_names[i] = in.readUTF();
+    private void receiveGameState() throws IOException {
+        for (int y = 0; y < Common.MATRIX_SIZE; y++) {
+            for (int x = 0; x < Common.MATRIX_SIZE; x++) {
+                matrix[y][x] = in.readByte();
             }
-        } catch (IOException e) {
-            System.err.println("Server disconnected. Exiting...");
-            System.exit(1);
         }
+        roundStatus = in.readByte();
     }
 
-    private void receive_game_status() {
-        try {
-            for (int i = 0; i < Common.MATRIX_SIZE; i++) {
-                in.readFully(matrix[i]);
-            }
-            for (int i = 0; i < CURRENT_PLAYERS; i++) {
-                scores[i] = in.readInt();
-            }
-            round_status = in.readByte();
-        } catch (IOException e) {
-            System.err.println("Server disconnected. Exiting...");
-            System.exit(1);
-        }
-    }
-
-    private void render_console() {
-        for (int i = 0; i < Common.MATRIX_SIZE; i++) {
-            for (int j = 0; j < Common.MATRIX_SIZE; j++) {
-                switch (matrix[i][j]) {
-                    case Common.EMPTY:
-                        System.out.print(" . ");
-                        break;
-                    case Common.FRUIT:
-                        System.out.print(" * ");
-                        break;
-                    case Common.FRUIT_SPECIAL:
-                        System.out.print(" @ ");
-                        break;
-                    default:
-                        // Players and their heads
-                        if (matrix[i][j] < Common.P1_HEAD) {
-                            System.out.print(" " + (matrix[i][j] + 1) + " ");
-                        } else {
-                            System.out.print(" H ");
-                        }
-                        break;
-                }
+    private void renderGame() {
+        for (int y = 0; y < Common.MATRIX_SIZE; y++) {
+            for (int x = 0; x < Common.MATRIX_SIZE; x++) {
+                System.out.print(matrix[y][x] == Common.EMPTY ? "." : "X");
             }
             System.out.println();
         }
-        System.out.println("Scores:");
-        for (int i = 0; i < CURRENT_PLAYERS; i++) {
-            System.out.println(player_names[i] + ": " + scores[i]);
-        }
+        System.out.println("Round Status: " + roundStatus);
     }
 
-    private void handle_input() {
+    private void sendInput(String input) {
+        out.println(input);
+    }
+
+    public void start() {
+        new Thread(() -> {
+            try {
+                while (true) {
+                    receiveGameState();
+                    renderGame();
+                    if (roundStatus == Common.END_FINAL) {
+                        System.out.println("Game over.");
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Disconnected from server.");
+            }
+        }).start();
+
         Scanner scanner = new Scanner(System.in);
+        System.out.println("Use W, A, S, D to move. Press Q to quit.");
         while (true) {
             String input = scanner.nextLine().toUpperCase();
             if (input.equals("Q")) {
-                close_and_exit();
+                System.exit(0);
             } else if (input.matches("[WASD]")) {
-                out.println(input);
+                sendInput(input);
             }
         }
-    }
-
-    private void close_and_exit() {
-        try {
-            in.close();
-            out.close();
-            socket.close();
-        } catch (IOException e) {
-            System.err.println("Error while closing the client.");
-        }
-        System.exit(0);
     }
 
     public static void main(String[] args) {
         if (args.length != 3) {
-            System.out.println("Usage: java main.java.tcpsnake.Client <nickname> <hostname> <port>");
+            System.out.println("Usage: java tcpsnake.Client <nickname> <hostname> <port>");
             return;
         }
 
-        String nick = args[0];
+        String nickname = args[0];
         String hostname = args[1];
         int port = Integer.parseInt(args[2]);
 
-        Client client = new Client(nick, hostname, port);
-
-        Thread inputThread = new Thread(client::handle_input);
-        inputThread.start();
-
-        while (true) {
-            client.receive_game_status();
-            client.render_console();
-
-            if (client.round_status == Common.END_FINAL) {
-                System.out.println("Game over! Thanks for playing!");
-                break;
-            }
-        }
-
-        client.close_and_exit();
+        Client client = new Client(nickname, hostname, port);
+        client.start();
     }
 }
