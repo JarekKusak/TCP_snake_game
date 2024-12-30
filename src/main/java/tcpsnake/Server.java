@@ -1,4 +1,4 @@
-package tcpsnake;
+package main.java.tcpsnake;
 
 import java.io.*;
 import java.net.*;
@@ -100,7 +100,7 @@ public class Server {
 
     public static void main(String[] args) {
         if (args.length != 3) {
-            System.out.println("Usage: java tcpsnake.Server <player_count> <port> <rounds>");
+            System.out.println("Usage: java main.java.tcpsnake.Server <player_count> <port> <rounds>");
             return;
         }
 

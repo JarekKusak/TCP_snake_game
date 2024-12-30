@@ -1,4 +1,4 @@
-package tcpsnake;
+package main.java.tcpsnake;
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
@@ -120,7 +120,7 @@ public class Client {
 
     public static void main(String[] args) {
         if (args.length != 3) {
-            System.out.println("Usage: java tcpsnake.Client <nickname> <hostname> <port>");
+            System.out.println("Usage: java main.java.tcpsnake.Client <nickname> <hostname> <port>");
             return;
         }
 

@@ -1,4 +1,4 @@
-package tcpsnake;
+package main.java.tcpsnake;
 
 /**
  * Common constants for the Client and Server classes.
