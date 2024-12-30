@@ -25,12 +25,14 @@ public class Server {
         serverSocket = new ServerSocket(port);
         System.out.println("Server is running on port " + port + " and waiting for " + playerCount + " players...");
 
-        // initialize matrix
-        for (int i = 0; i < MATRIX_SIZE; i++)
-            for (int j = 0; j < MATRIX_SIZE; j++)
+        // init of map
+        for (int i = 0; i < MATRIX_SIZE; i++) {
+            for (int j = 0; j < MATRIX_SIZE; j++) {
                 matrix[i][j] = Common.EMPTY;
+            }
+        }
 
-        // connect players
+        // player connection and their settings
         for (int i = 0; i < playerCount; i++) {
             Socket clientSocket = serverSocket.accept();
             clientSockets[i] = clientSocket;
@@ -38,7 +40,18 @@ public class Server {
             inputStreams[i] = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             playerNames[i] = inputStreams[i].readLine();
             System.out.println("Player " + playerNames[i] + " connected.");
-            players[i] = new Player(i, new Position(2 + i, 2 + i), new Position(0, 1)); // simple positions
+
+            // setting of players to the corners
+            if (i == 0) {
+                players[i] = new Player(i, new Position(1, 1), new Position(0, 1)); // Levý horní roh
+            } else if (i == 1) {
+                players[i] = new Player(i, new Position(MATRIX_SIZE - 2, MATRIX_SIZE - 2), new Position(0, -1)); // Pravý dolní roh
+            } else if (i == 2) {
+                players[i] = new Player(i, new Position(1, MATRIX_SIZE - 2), new Position(1, 0)); // Levý dolní roh
+            } else if (i == 3) {
+                players[i] = new Player(i, new Position(MATRIX_SIZE - 2, 1), new Position(-1, 0)); // Pravý horní roh
+            }
+
             connectedPlayers++;
         }
 
