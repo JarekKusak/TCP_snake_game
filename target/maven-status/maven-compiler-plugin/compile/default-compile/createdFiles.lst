@@ -1,5 +1,5 @@
-tcpsnake/Position.class
-tcpsnake/Client.class
-tcpsnake/Server.class
-tcpsnake/Common.class
-tcpsnake/Player.class
+main/java/tcpsnake/Server.class
+main/java/tcpsnake/Common.class
+main/java/tcpsnake/Client.class
+main/java/tcpsnake/Player.class
+main/java/tcpsnake/Position.class
