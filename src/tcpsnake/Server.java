@@ -116,3 +116,49 @@ public class Server {
         }
     }
 }
+
+class Position {
+    int x, y;
+
+    Position(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    void update(Position direction) {
+        this.x += direction.x;
+        this.y += direction.y;
+    }
+}
+
+class Player {
+    private int id;
+    private Position position;
+    private Position direction;
+    private boolean alive = true;
+
+    public Player(int id, Position position, Position direction) {
+        this.id = id;
+        this.position = position;
+        this.direction = direction;
+    }
+
+    public void move(byte[][] matrix) {
+        if (!alive) return;
+        position.update(direction);
+        matrix[position.y][position.x] = (byte) id;
+    }
+
+    public void changeDirection(char input) {
+        switch (input) {
+            case 'W': direction = new Position(0, -1); break;
+            case 'S': direction = new Position(0, 1); break;
+            case 'A': direction = new Position(-1, 0); break;
+            case 'D': direction = new Position(1, 0); break;
+        }
+    }
+
+    public boolean isAlive() {
+        return alive;
+    }
+}
