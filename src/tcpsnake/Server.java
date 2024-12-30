@@ -8,7 +8,7 @@ public class Server {
     private static final int MATRIX_SIZE = Common.MATRIX_SIZE;
     private static final int MAX_PLAYERS = Common.MAX_PLAYERS;
     private byte[][] matrix = new byte[MATRIX_SIZE][MATRIX_SIZE];
-    //private Player[] players = new Player[MAX_PLAYERS];
+    private Player[] players = new Player[MAX_PLAYERS];
     private String[] playerNames = new String[MAX_PLAYERS];
     private int[] scores = new int[MAX_PLAYERS];
     private int connectedPlayers = 0;
@@ -38,7 +38,7 @@ public class Server {
             inputStreams[i] = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             playerNames[i] = inputStreams[i].readLine();
             System.out.println("Player " + playerNames[i] + " connected.");
-            //players[i] = new Player(i, new Position(2 + i, 2 + i), new Position(0, 1)); // Simple positions
+            players[i] = new Player(i, new Position(2 + i, 2 + i), new Position(0, 1)); // simple positions
             connectedPlayers++;
         }
 
@@ -77,6 +77,24 @@ public class Server {
             // send game state to players
             sendGameState();
             Thread.sleep(500);
+        }
+    }
+
+    private boolean checkRoundStatus() {
+        int alivePlayers = 0;
+        for (Player player : players) {
+            if (player.isAlive())
+                alivePlayers++;
+        }
+        return alivePlayers > 1;
+    }
+
+    private void sendGameState() throws IOException {
+        for (int i = 0; i < connectedPlayers; i++) {
+            for (int y = 0; y < MATRIX_SIZE; y++) {
+                outputStreams[i].write(matrix[y]);
+            }
+            outputStreams[i].flush();
         }
     }
 
