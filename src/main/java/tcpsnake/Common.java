@@ -7,7 +7,7 @@ public class Common
 {
     public static final int MAX_PLAYERS = 4;
 
-    public static final int MATRIX_SIZE = 12;
+    public static final int MATRIX_SIZE = 16;
     public static final int WIN_MATRIX_SIZE = 960;
 
     public static final int WIN_CELL_SIZE = WIN_MATRIX_SIZE /  MATRIX_SIZE;
