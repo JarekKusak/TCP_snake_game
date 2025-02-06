@@ -20,11 +20,7 @@ public class Common
     public static final byte P2 = 1;
     public static final byte P3 = 2;
     public static final byte P4 = 3;
-    public static final byte P1_HEAD = 4;
-    public static final byte P2_HEAD = 5;
-    public static final byte P3_HEAD = 6;
-    public static final byte P4_HEAD = 7;
-    public static final byte FRUIT = 8;
+
     public static final byte FRUIT_SPECIAL = 9;
     public static final byte EMPTY = 10;
 
@@ -36,4 +32,12 @@ public class Common
     public static final byte ROUND_END = -2;
     public static final byte ROUND_STARTED = -1;
     public static final byte NOT_STARTED = 0;
+
+
+    /* Updated matrix cells */
+    public static final byte P1_HEAD = 'X';
+    public static final byte P2_HEAD = 'Y';
+    public static final byte P1_BODY = 'x';
+    public static final byte P2_BODY = 'y';
+    public static final byte FRUIT = 'O';
 }
