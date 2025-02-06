@@ -1,7 +1,11 @@
-package main.java.tcpsnake;
+package tcpsnake;
 
 import java.io.*;
 import java.net.*;
+
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+
 import java.util.Scanner;
 
 public class Client {
@@ -73,15 +77,44 @@ public class Client {
             }
         }).start();
 
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Use W, A, S, D to move. Press Q to quit.");
-        while (true) {
-            String input = scanner.nextLine().toUpperCase();
-            if (input.equals("Q")) {
-                System.exit(0);
-            } else if (input.matches("[WASD]")) {
-                sendInput(input);
+        System.out.println("Use W, A, S, D to move. Press ESC to quit.");
+
+        try {
+            // Vytvoříme terminál (system(true) => běží nad systémovou konzolí)
+            Terminal terminal = TerminalBuilder.builder()
+                    .system(true)
+                    .build();
+
+            // Přepneme do raw módu: klávesy chodí rovnou, bez Enteru
+            terminal.enterRawMode();
+
+            // Získáme Reader (znakový stream)
+            java.io.Reader reader = terminal.reader();
+
+            whileg (true) {
+                // read() vrací -1 při EOF nebo int kód znaku
+                int ch = reader.read();
+                if (ch == -1) {
+                    System.out.println("EOF? Končíme...");
+                    break;
+                }
+
+                if (ch == 27) { // ESC
+                    System.out.println("Ukončuji program");
+                    break;
+                }
+
+                // Pro W/A/S/D to bude prosté písmeno
+                char c = (char) ch;
+                char direction = Character.toUpperCase(c);
+                if (direction == 'W' || direction == 'A' || direction == 'S' || direction == 'D') {
+                    sendInput(String.valueOf(direction));
+                }
             }
+
+            terminal.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

@@ -1,4 +1,4 @@
-package main.java.tcpsnake;
+package tcpsnake;
 
 import java.io.*;
 import java.net.*;
@@ -84,16 +84,18 @@ public class Server {
                 if (command != null) {
                     players[i].changeDirection(command.charAt(0));
                 }
-                players[i].move(matrix, players);
+                players[i].move(matrix);
             }
 
             if (isRoundOver()) {
+                broadcastGameState(); // Poslední vykreslení před ukončením hry
+                Thread.sleep(2000); // Pauza 2 sekundy, aby hráči viděli výsledek
                 break;
             }
 
             broadcastGameState();
 
-            Thread.sleep(500);
+            Thread.sleep(250);
         }
     }
 
@@ -104,8 +106,10 @@ public class Server {
                 alivePlayers++;
             }
         }
-        return alivePlayers < 2;
+
+        return alivePlayers < connectedPlayers;
     }
+
 
     private void broadcastGameState() throws IOException {
         for (int i = 0; i < connectedPlayers; i++) {
@@ -250,53 +254,32 @@ class Player {
         this.direction = direction;
     }
 
-    public void move(byte[][] matrix, Player[] players) {
+    public void move(byte[][] matrix) {
         if (!alive) return;
 
         Position head = body.getFirst();
         Position newHead = new Position(head.x + direction.x, head.y + direction.y);
 
-        // Zajištění průchodu hranicemi (had vyjede z jedné strany a objeví se na druhé)
+        // ✅ **Přechod přes hrany mapy**
         if (newHead.x < 0) newHead.x = matrix.length - 1;
         else if (newHead.x >= matrix.length) newHead.x = 0;
         if (newHead.y < 0) newHead.y = matrix[0].length - 1;
         else if (newHead.y >= matrix[0].length) newHead.y = 0;
 
-
-        for (Player other : players) {
-            if (other != null && other != this) {
-                if (other.body.contains(newHead)) {
-                    alive = false;
-                    return;
-                }
-            }
-        }
-
-        for (Player other : players) {
-            if (other != null && other != this) {
-                Position otherHead = other.body.getFirst();
-                if (otherHead.x == newHead.x && otherHead.y == newHead.y) {
-                    this.alive = false;
-                    other.alive = false;
-                    return;
-                }
-            }
-        }
-
-        // Kolize se sebou samým
-        if (body.contains(newHead)) {
+        // ✅ **Detekce kolize se sebou samým nebo jiným hráčem pomocí `matrix`**
+        if (matrix[newHead.y][newHead.x] != Common.EMPTY && matrix[newHead.y][newHead.x] != Common.FRUIT) {
             alive = false;
             return;
         }
 
-        // Sežrání jablka
+        // ✅ **Sežrání jablka**
         boolean ateApple = matrix[newHead.y][newHead.x] == Common.FRUIT;
         if (ateApple) {
             grew = true;
             generateNewApple(matrix); // Vygenerování nového jablka
         }
 
-        // Pokud had nesnědl jablko, odstraníme jeho ocas
+        // ✅ **Pohyb hada a mazání ocasu (pokud nesnědl jablko)**
         if (!grew) {
             Position tail = body.removeLast();
             matrix[tail.y][tail.x] = Common.EMPTY;
@@ -304,16 +287,16 @@ class Player {
             grew = false;
         }
 
-        // Přidání nové hlavy
+        // ✅ **Přidání nové hlavy do těla hada**
         body.addFirst(newHead);
-
-        // Aktualizace matice: Hlava → velké písmeno, Tělo → malé písmeno
         matrix[newHead.y][newHead.x] = id == 0 ? Common.P1_HEAD : Common.P2_HEAD;
+
         for (int i = 1; i < body.size(); i++) {
             Position segment = body.get(i);
             matrix[segment.y][segment.x] = id == 0 ? Common.P1_BODY : Common.P2_BODY;
         }
     }
+
 
     public void changeDirection(char input) {
         Position newDirection = switch (input) {
