@@ -232,63 +232,88 @@ class Position {
 
 class Player {
     private int id;
-    private Position position;
-    private Position previousPosition; // Uchová předchozí pozici
+    private LinkedList<Position> body; // Hadovo tělo
     private Position direction;
     private boolean alive = true;
+    private boolean grew = false; // Indikátor růstu při snězení jablka
 
     public Player(int id, Position position, Position direction) {
         this.id = id;
-        this.position = new Position(position.x, position.y);
-        this.previousPosition = new Position(position.x, position.y); // Výchozí pozice
+        this.body = new LinkedList<>();
+        this.body.add(new Position(position.x, position.y)); // Začíná pouze hlavou
         this.direction = direction;
     }
 
     public void move(byte[][] matrix) {
         if (!alive) return;
 
-        // Smazání předchozí pozice z matice
-        matrix[previousPosition.y][previousPosition.x] = Common.EMPTY;
+        Position head = body.getFirst();
+        Position newHead = new Position(head.x + direction.x, head.y + direction.y);
 
-        // Aktualizace pozice
-        previousPosition.x = position.x;
-        previousPosition.y = position.y;
+        // Překročení hranic mapy - průchod druhou stranou
+        if (newHead.x < 0) newHead.x = matrix.length - 1;
+        else if (newHead.x >= matrix.length) newHead.x = 0;
+        if (newHead.y < 0) newHead.y = matrix[0].length - 1;
+        else if (newHead.y >= matrix[0].length) newHead.y = 0;
 
-        position.update(direction);
+        // Kolize se sebou samým
+        if (body.contains(newHead)) {
+            alive = false;
+            return;
+        }
 
-        // Zajištění pohybu v rámci matice (zabalení okrajů)
-        if (position.x < 0) position.x = matrix.length - 1;
-        else if (position.x >= matrix.length) position.x = 0;
+        // Sežrání jablka
+        boolean ateApple = matrix[newHead.y][newHead.x] == Common.FRUIT;
+        if (ateApple) {
+            grew = true;
+            generateNewApple(matrix); // Vygenerování nového jablka
+        }
 
-        if (position.y < 0) position.y = matrix[0].length - 1;
-        else if (position.y >= matrix[0].length) position.y = 0;
+        // Pokud had nesnědl jablko, odstraníme jeho ocas
+        if (!grew) {
+            Position tail = body.removeLast();
+            matrix[tail.y][tail.x] = Common.EMPTY;
+        } else {
+            grew = false;
+        }
 
-        // Aktualizace nové pozice v matici
-        matrix[position.y][position.x] = (byte) id;
+        // Přidání nové hlavy
+        body.addFirst(newHead);
+
+        // Aktualizace matice: Hlava → velké písmeno, Tělo → malé písmeno
+        matrix[newHead.y][newHead.x] = id == 0 ? Common.P1_HEAD : Common.P2_HEAD;
+        for (int i = 1; i < body.size(); i++) {
+            Position segment = body.get(i);
+            matrix[segment.y][segment.x] = id == 0 ? Common.P1_BODY : Common.P2_BODY;
+        }
     }
 
     public void changeDirection(char input) {
-        switch (input) {
-            case 'W':
-                direction = new Position(0, -1); // Nahoru
-                break;
-            case 'S':
-                direction = new Position(0, 1); // Dolů
-                break;
-            case 'A':
-                direction = new Position(-1, 0); // Vlevo
-                break;
-            case 'D':
-                direction = new Position(1, 0); // Vpravo
-                break;
+        Position newDirection = switch (input) {
+            case 'W' -> new Position(0, -1);
+            case 'S' -> new Position(0, 1);
+            case 'A' -> new Position(-1, 0);
+            case 'D' -> new Position(1, 0);
+            default -> direction;
+        };
+
+        // Zabránění otočení o 180°
+        if (body.size() == 1 || !(newDirection.x == -direction.x && newDirection.y == -direction.y)) {
+            direction = newDirection;
         }
+    }
+
+    private void generateNewApple(byte[][] matrix) {
+        Random rand = new Random();
+        int x, y;
+        do {
+            x = rand.nextInt(matrix.length);
+            y = rand.nextInt(matrix[0].length);
+        } while (matrix[y][x] != Common.EMPTY);
+        matrix[y][x] = Common.FRUIT;
     }
 
     public boolean isAlive() {
         return alive;
-    }
-
-    public void kill() {
-        alive = false;
     }
 }
