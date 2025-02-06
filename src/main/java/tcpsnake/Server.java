@@ -84,7 +84,7 @@ public class Server {
                 if (command != null) {
                     players[i].changeDirection(command.charAt(0));
                 }
-                players[i].move(matrix);
+                players[i].move(matrix, players);
             }
 
             if (isRoundOver()) {
@@ -125,16 +125,22 @@ public class Server {
                 matrix[y][x] = Common.EMPTY;
             }
         }
-        Arrays.fill(scores, 0);
 
-        // Reset hráčů do výchozích pozic
         for (int i = 0; i < connectedPlayers; i++) {
-            if (players[i] != null) {
-                Position startPosition = getPlayerStartingPosition(i);
-                players[i] = new Player(i, startPosition, getPlayerStartingDirection(i));
-                matrix[startPosition.y][startPosition.x] = (byte) i;
-            }
+            players[i] = new Player(i, getPlayerStartingPosition(i), getPlayerStartingDirection(i));
         }
+
+        generateApple();
+    }
+
+    private void generateApple() {
+        Random rand = new Random();
+        int x, y;
+        do {
+            x = rand.nextInt(MATRIX_SIZE);
+            y = rand.nextInt(MATRIX_SIZE);
+        } while (matrix[y][x] != Common.EMPTY);
+        matrix[y][x] = Common.FRUIT;
     }
 
     private Position getPlayerStartingPosition(int playerId) {
@@ -232,29 +238,50 @@ class Position {
 
 class Player {
     private int id;
-    private LinkedList<Position> body; // Hadovo tělo
+    private LinkedList<Position> body; // Uchovává celý had
     private Position direction;
     private boolean alive = true;
-    private boolean grew = false; // Indikátor růstu při snězení jablka
+    private boolean grew = false; // Indikátor růstu při sežrání jablka
 
     public Player(int id, Position position, Position direction) {
         this.id = id;
         this.body = new LinkedList<>();
-        this.body.add(new Position(position.x, position.y)); // Začíná pouze hlavou
+        this.body.add(new Position(position.x, position.y)); // Had začíná jen s hlavou
         this.direction = direction;
     }
 
-    public void move(byte[][] matrix) {
+    public void move(byte[][] matrix, Player[] players) {
         if (!alive) return;
 
         Position head = body.getFirst();
         Position newHead = new Position(head.x + direction.x, head.y + direction.y);
 
-        // Překročení hranic mapy - průchod druhou stranou
+        // Zajištění průchodu hranicemi (had vyjede z jedné strany a objeví se na druhé)
         if (newHead.x < 0) newHead.x = matrix.length - 1;
         else if (newHead.x >= matrix.length) newHead.x = 0;
         if (newHead.y < 0) newHead.y = matrix[0].length - 1;
         else if (newHead.y >= matrix[0].length) newHead.y = 0;
+
+
+        for (Player other : players) {
+            if (other != null && other != this) {
+                if (other.body.contains(newHead)) {
+                    alive = false;
+                    return;
+                }
+            }
+        }
+
+        for (Player other : players) {
+            if (other != null && other != this) {
+                Position otherHead = other.body.getFirst();
+                if (otherHead.x == newHead.x && otherHead.y == newHead.y) {
+                    this.alive = false;
+                    other.alive = false;
+                    return;
+                }
+            }
+        }
 
         // Kolize se sebou samým
         if (body.contains(newHead)) {

@@ -37,7 +37,16 @@ public class Client {
     private void renderGame() {
         for (int y = 0; y < Common.MATRIX_SIZE; y++) {
             for (int x = 0; x < Common.MATRIX_SIZE; x++) {
-                System.out.print(matrix[y][x] == Common.EMPTY ? "." : "X");
+                char displayChar = switch (matrix[y][x]) {
+                    case Common.EMPTY -> '.';
+                    case Common.FRUIT -> 'O';
+                    case Common.P1_HEAD -> 'X';
+                    case Common.P2_HEAD -> 'Y';
+                    case Common.P1_BODY -> 'x';
+                    case Common.P2_BODY -> 'y';
+                    default -> '?';
+                };
+                System.out.print(" " + displayChar + " ");
             }
             System.out.println();
         }
