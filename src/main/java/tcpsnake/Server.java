@@ -5,6 +5,10 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+/**
+ * Represents the server for the Snake game played over TCP.
+ * It handles player connections, game state updates, and communication with clients.
+ */
 public class Server {
     private static final int MATRIX_SIZE = Common.MATRIX_SIZE;
     private static final int MAX_PLAYERS = Common.MAX_PLAYERS;
@@ -20,19 +24,28 @@ public class Server {
     private DataOutputStream[] outputStreams = new DataOutputStream[MAX_PLAYERS];
     private BufferedReader[] inputStreams = new BufferedReader[MAX_PLAYERS];
 
+    @SuppressWarnings("unchecked")
     private Queue<String>[] playerCommands = new ConcurrentLinkedQueue[MAX_PLAYERS];
     private byte roundStatus = Common.NOT_STARTED;
 
     private int rounds;
 
+    /**
+     * Constructs a new Server instance.
+     *
+     * @param playerCount the number of players who will join the game
+     * @param port the port on which the server will listen
+     * @param rounds the number of rounds to be played
+     * @throws IOException if an I/O error occurs when opening the socket
+     */
     public Server(int playerCount, int port, int rounds) throws IOException {
         this.rounds = rounds;
         this.serverSocket = new ServerSocket(port);
 
-        // Initialize game matrix
+        // initialize game matrix
         resetGameState();
 
-        // Wait for players to connect
+        // wait for players to connect
         System.out.println("Server is running on port " + port + " and waiting for " + playerCount + " players...");
         for (int i = 0; i < playerCount; i++) {
             Socket clientSocket = serverSocket.accept();
@@ -49,12 +62,16 @@ public class Server {
             playerCommands[i] = new ConcurrentLinkedQueue<>();
             connectedPlayers++;
 
-            // Start a thread to handle player input
+            // start a thread to handle player input
             new ClientHandler(this, i, inputStreams[i]).start();
         }
         System.out.println("All players connected. Starting the game...");
     }
 
+    /**
+     * Starts the game, including multiple rounds if specified.
+     * Manages the main game loop and handles round transitions.
+     */
     public void startGame() {
         try {
             for (int round = 1; round <= rounds; round++) {
@@ -76,9 +93,15 @@ public class Server {
         }
     }
 
+    /**
+     * Manages a single round of the game. Handles player commands, movement, and detects round completion.
+     *
+     * @throws IOException if an I/O error occurs during communication
+     * @throws InterruptedException if the thread is interrupted while sleeping
+     */
     private void playRound() throws IOException, InterruptedException {
         while (true) {
-            // Zpracování příkazů hráčů
+            // processing player commands
             for (int i = 0; i < connectedPlayers; i++) {
                 String command = playerCommands[i].poll();
                 if (command != null) {
@@ -88,8 +111,10 @@ public class Server {
             }
 
             if (isRoundOver()) {
-                broadcastGameState(); // Poslední vykreslení před ukončením hry
-                Thread.sleep(2000); // Pauza 2 sekundy, aby hráči viděli výsledek
+                // final rendering before ending the game
+                broadcastGameState();
+                // 2 second pause so that players can see the result
+                Thread.sleep(2000);
                 break;
             }
 
@@ -99,6 +124,11 @@ public class Server {
         }
     }
 
+    /**
+     * Checks if the round is over by counting how many players are still alive.
+     *
+     * @return true if the round is over, false otherwise
+     */
     private boolean isRoundOver() {
         int alivePlayers = 0;
         for (Player player : players) {
@@ -106,11 +136,14 @@ public class Server {
                 alivePlayers++;
             }
         }
-
         return alivePlayers < connectedPlayers;
     }
 
-
+    /**
+     * Sends the current game state (the matrix and round status) to all connected players.
+     *
+     * @throws IOException if an I/O error occurs while sending data
+     */
     private void broadcastGameState() throws IOException {
         for (int i = 0; i < connectedPlayers; i++) {
             for (int y = 0; y < MATRIX_SIZE; y++) {
@@ -123,6 +156,9 @@ public class Server {
         }
     }
 
+    /**
+     * Resets the game state by clearing the matrix, resetting players, and generating a new apple.
+     */
     private void resetGameState() {
         for (int y = 0; y < MATRIX_SIZE; y++) {
             for (int x = 0; x < MATRIX_SIZE; x++) {
@@ -137,6 +173,9 @@ public class Server {
         generateApple();
     }
 
+    /**
+     * Generates a new apple (fruit) in a random empty position on the matrix.
+     */
     private void generateApple() {
         Random rand = new Random();
         int x, y;
@@ -147,6 +186,12 @@ public class Server {
         matrix[y][x] = Common.FRUIT;
     }
 
+    /**
+     * Determines the starting position for a given player ID.
+     *
+     * @param playerId the ID of the player
+     * @return the starting Position for the player
+     */
     private Position getPlayerStartingPosition(int playerId) {
         return switch (playerId) {
             case 0 -> new Position(1, 1);
@@ -157,6 +202,12 @@ public class Server {
         };
     }
 
+    /**
+     * Determines the starting direction for a given player ID.
+     *
+     * @param playerId the ID of the player
+     * @return the starting direction as a Position
+     */
     private Position getPlayerStartingDirection(int playerId) {
         return switch (playerId) {
             case 0 -> new Position(0, 1);
@@ -167,6 +218,9 @@ public class Server {
         };
     }
 
+    /**
+     * Closes all client connections and the server socket.
+     */
     private void closeConnections() {
         try {
             for (Socket socket : clientSockets) {
@@ -180,10 +234,22 @@ public class Server {
         }
     }
 
+    /**
+     * Processes input from a specific player by adding the command to the player's queue.
+     *
+     * @param playerId the ID of the player
+     * @param input the command received from the player
+     */
     public synchronized void processPlayerInput(int playerId, String input) {
         playerCommands[playerId].add(input);
     }
 
+    /**
+     * The main method to start the server.
+     * Usage: java tcpsnake.Server &lt;player_count&gt; &lt;port&gt; &lt;rounds&gt;
+     *
+     * @param args command-line arguments specifying the number of players, port, and rounds
+     */
     public static void main(String[] args) {
         if (args.length != 3) {
             System.out.println("Usage: java tcpsnake.Server <player_count> <port> <rounds>");
@@ -202,17 +268,30 @@ public class Server {
         }
     }
 
+    /**
+     * A thread that continuously listens for commands from a specific player and forwards them to the server.
+     */
     private static class ClientHandler extends Thread {
         private Server server;
         private int playerId;
         private BufferedReader input;
 
+        /**
+         * Constructs a ClientHandler for the specified server and player.
+         *
+         * @param server the Server instance to which this handler belongs
+         * @param playerId the ID of the player this handler manages
+         * @param input the input stream from the player's socket
+         */
         public ClientHandler(Server server, int playerId, BufferedReader input) {
             this.server = server;
             this.playerId = playerId;
             this.input = input;
         }
 
+        /**
+         * Runs the thread, reading commands from the player and passing them to the server.
+         */
         public void run() {
             try {
                 String command;
@@ -226,60 +305,89 @@ public class Server {
     }
 }
 
+/**
+ * Represents a position with x and y coordinates.
+ */
 class Position {
     int x, y;
 
+    /**
+     * Constructs a Position with the given x and y coordinates.
+     *
+     * @param x the x coordinate
+     * @param y the y coordinate
+     */
     Position(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
+    /**
+     * Updates this position by adding the given direction's x and y values to this position's coordinates.
+     *
+     * @param direction the direction to update this position with
+     */
     void update(Position direction) {
         this.x += direction.x;
         this.y += direction.y;
     }
 }
 
+/**
+ * Represents a player in the Snake game, including the snake's body and movement logic.
+ */
 class Player {
     private int id;
-    private LinkedList<Position> body; // Uchovává celý had
+    private LinkedList<Position> body; // stores the entire snake
     private Position direction;
     private boolean alive = true;
-    private boolean grew = false; // Indikátor růstu při sežrání jablka
+    private boolean grew = false; // indicator of growth when an apple is eaten
 
+    /**
+     * Constructs a Player with a given ID, initial position, and direction.
+     *
+     * @param id the player's ID
+     * @param position the initial position of the player's snake
+     * @param direction the initial direction of the player's snake
+     */
     public Player(int id, Position position, Position direction) {
         this.id = id;
         this.body = new LinkedList<>();
-        this.body.add(new Position(position.x, position.y)); // Had začíná jen s hlavou
+        this.body.add(new Position(position.x, position.y)); // snake starts with only the head
         this.direction = direction;
     }
 
+    /**
+     * Moves the player's snake based on its current direction and updates the game matrix accordingly.
+     *
+     * @param matrix the game matrix representing the playing field
+     */
     public void move(byte[][] matrix) {
         if (!alive) return;
 
         Position head = body.getFirst();
         Position newHead = new Position(head.x + direction.x, head.y + direction.y);
 
-        // ✅ **Přechod přes hrany mapy**
+        // crossing the map edges
         if (newHead.x < 0) newHead.x = matrix.length - 1;
         else if (newHead.x >= matrix.length) newHead.x = 0;
         if (newHead.y < 0) newHead.y = matrix[0].length - 1;
         else if (newHead.y >= matrix[0].length) newHead.y = 0;
 
-        // ✅ **Detekce kolize se sebou samým nebo jiným hráčem pomocí `matrix`**
+        // collision detection with itself or another player using matrix
         if (matrix[newHead.y][newHead.x] != Common.EMPTY && matrix[newHead.y][newHead.x] != Common.FRUIT) {
             alive = false;
             return;
         }
 
-        // ✅ **Sežrání jablka**
+        // eating an apple
         boolean ateApple = matrix[newHead.y][newHead.x] == Common.FRUIT;
         if (ateApple) {
             grew = true;
-            generateNewApple(matrix); // Vygenerování nového jablka
+            generateNewApple(matrix); // generate a new apple
         }
 
-        // ✅ **Pohyb hada a mazání ocasu (pokud nesnědl jablko)**
+        // moving the snake and removing the tail (if it did not eat an apple)
         if (!grew) {
             Position tail = body.removeLast();
             matrix[tail.y][tail.x] = Common.EMPTY;
@@ -287,7 +395,7 @@ class Player {
             grew = false;
         }
 
-        // ✅ **Přidání nové hlavy do těla hada**
+        // adding a new head to the snake's body
         body.addFirst(newHead);
         matrix[newHead.y][newHead.x] = id == 0 ? Common.P1_HEAD : Common.P2_HEAD;
 
@@ -297,7 +405,12 @@ class Player {
         }
     }
 
-
+    /**
+     * Changes the snake's direction based on the given character command (W, A, S, D).
+     * Prevents reversing direction by 180 degrees if the snake is longer than 1 segment.
+     *
+     * @param input the character command specifying the new direction
+     */
     public void changeDirection(char input) {
         Position newDirection = switch (input) {
             case 'W' -> new Position(0, -1);
@@ -307,12 +420,17 @@ class Player {
             default -> direction;
         };
 
-        // Zabránění otočení o 180°
+        // prevent 180° turn
         if (body.size() == 1 || !(newDirection.x == -direction.x && newDirection.y == -direction.y)) {
             direction = newDirection;
         }
     }
 
+    /**
+     * Generates a new apple on the game matrix at a random empty location.
+     *
+     * @param matrix the game matrix
+     */
     private void generateNewApple(byte[][] matrix) {
         Random rand = new Random();
         int x, y;
@@ -323,6 +441,11 @@ class Player {
         matrix[y][x] = Common.FRUIT;
     }
 
+    /**
+     * Checks if this player's snake is still alive.
+     *
+     * @return true if the snake is alive, false otherwise
+     */
     public boolean isAlive() {
         return alive;
     }
