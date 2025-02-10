@@ -54,19 +54,36 @@ public class Client {
     }
 
     /**
-     * Renders the current state of the game matrix to the console.
+     * Renders the current state of the game matrix to the console, including borders and round information.
      */
     private void renderGame() {
+        // clear the console
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+
+        // display error message if last move was invalid
         if (invalidMove) {
             System.out.println("Invalid move. Use W, A, S, or D.");
         }
-        System.out.println("\nRound: " + roundStatus*(-1)); // display round number correctly
-        // display error message if last move was invalid
+
+        // display current round number in the format "Round X/Y"
+        System.out.println("\nRound " + (-roundStatus));
+
+        // print top border
+        System.out.print("╔");
+        for (int i = 0; i < Common.MATRIX_SIZE * 2; i++) {
+            System.out.print("═");
+        }
+        System.out.println("╗");
+
+        // print game matrix with left and right borders
         for (int y = 0; y < Common.MATRIX_SIZE; y++) {
+            System.out.print("║"); // left border
             for (int x = 0; x < Common.MATRIX_SIZE; x++) {
                 String color = Common.RESET_COLOR;
                 char cell = (char) matrix[y][x];
 
+                // assign colors to different players
                 switch (cell) {
                     case 'X', 'x' -> color = Common.P1_COLOR; // Player 1 (red)
                     case 'Y', 'y' -> color = Common.P2_COLOR; // Player 2 (blue)
@@ -74,10 +91,17 @@ public class Client {
                     case 'W', 'w' -> color = Common.P4_COLOR; // Player 4 (yellow)
                 }
 
-                System.out.print(color + " " + cell + " " + Common.RESET_COLOR);
+                System.out.print(color + cell + " " + Common.RESET_COLOR);
             }
-            System.out.println();
+            System.out.println("║"); // right border
         }
+
+        // print bottom border
+        System.out.print("╚");
+        for (int i = 0; i < Common.MATRIX_SIZE * 2; i++) {
+            System.out.print("═");
+        }
+        System.out.println("╝");
     }
 
     /**

@@ -29,6 +29,7 @@ public class Server {
     private byte roundStatus = Common.NOT_STARTED;
 
     private int rounds;
+    private int currentRound;
 
     /**
      * Constructs a new Server instance.
@@ -41,6 +42,7 @@ public class Server {
     public Server(int playerCount, int port, int rounds) throws IOException {
         this.rounds = rounds;
         this.serverSocket = new ServerSocket(port);
+        currentRound = 1;
 
         // initialize game matrix
         resetGameState();
@@ -78,6 +80,7 @@ public class Server {
                 roundStatus = Common.ROUND_STARTED;
                 System.out.println("Round " + round + " started.");
                 resetGameState();
+                currentRound = round;
                 playRound();
                 roundStatus = Common.ROUND_END;
                 System.out.println("Round " + round + " ended.");
@@ -152,9 +155,11 @@ public class Server {
                 }
             }
             outputStreams[i].writeByte(roundStatus);
+            outputStreams[i].writeInt(currentRound); // Posíláme číslo aktuálního kola
             outputStreams[i].flush();
         }
     }
+
 
     /**
      * Resets the game state by clearing the matrix, resetting players, and generating a new apple.
