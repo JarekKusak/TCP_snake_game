@@ -19,6 +19,7 @@ public class Client {
     private byte roundStatus;
     private boolean invalidMove = false; // Flag to track invalid inputs
 
+    private byte currentRound;
     /**
      * Constructs the client, establishing a connection to the server and sending the nickname.
      *
@@ -51,6 +52,7 @@ public class Client {
             }
         }
         roundStatus = in.readByte();
+        currentRound = in.readByte();
     }
 
     /**
@@ -67,7 +69,7 @@ public class Client {
         }
 
         // display current round number in the format "Round X/Y"
-        System.out.println("\nRound " + (-roundStatus));
+        System.out.println("\nRound " + currentRound);
 
         // print top border
         System.out.print("╔");

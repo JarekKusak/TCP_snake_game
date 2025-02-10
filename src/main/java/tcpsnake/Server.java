@@ -29,7 +29,7 @@ public class Server {
     private byte roundStatus = Common.NOT_STARTED;
 
     private int rounds;
-    private int currentRound;
+    private byte currentRound = 1;
 
     /**
      * Constructs a new Server instance.
@@ -42,7 +42,6 @@ public class Server {
     public Server(int playerCount, int port, int rounds) throws IOException {
         this.rounds = rounds;
         this.serverSocket = new ServerSocket(port);
-        currentRound = 1;
 
         // initialize game matrix
         resetGameState();
@@ -80,8 +79,10 @@ public class Server {
                 roundStatus = Common.ROUND_STARTED;
                 System.out.println("Round " + round + " started.");
                 resetGameState();
-                currentRound = round;
+                System.out.println("Starting Round " + currentRound);
+                //currentRound = round;
                 playRound();
+                currentRound++;
                 roundStatus = Common.ROUND_END;
                 System.out.println("Round " + round + " ended.");
                 Thread.sleep(2000);
@@ -155,7 +156,7 @@ public class Server {
                 }
             }
             outputStreams[i].writeByte(roundStatus);
-            outputStreams[i].writeInt(currentRound); // Posíláme číslo aktuálního kola
+            outputStreams[i].writeByte(currentRound); // Posíláme číslo aktuálního kola
             outputStreams[i].flush();
         }
     }
@@ -368,19 +369,19 @@ class Player {
         Position head = body.getFirst();
         Position newHead = new Position(head.x + direction.x, head.y + direction.y);
 
-        // Wall wrapping
+        // wall wrapping
         if (newHead.x < 0) newHead.x = matrix.length - 1;
         else if (newHead.x >= matrix.length) newHead.x = 0;
         if (newHead.y < 0) newHead.y = matrix[0].length - 1;
         else if (newHead.y >= matrix[0].length) newHead.y = 0;
 
-        // Collision detection
+        // collision detection
         if (matrix[newHead.y][newHead.x] != Common.EMPTY && matrix[newHead.y][newHead.x] != Common.FRUIT && matrix[newHead.y][newHead.x] != Common.SPECIAL_FRUIT) {
             alive = false;
             return;
         }
 
-        // Eating apple
+        // eating apple
         if (matrix[newHead.y][newHead.x] == Common.FRUIT) {
             grew = true;
             score += 10;
@@ -433,7 +434,7 @@ class Player {
             y = rand.nextInt(matrix[0].length);
         } while (matrix[y][x] != Common.EMPTY);
 
-        matrix[y][x] = rand.nextDouble() < 0.15 ? Common.SPECIAL_FRUIT : Common.FRUIT; // 15% chance for golden apple
+        matrix[y][x] = rand.nextDouble() < 0.99 ? Common.SPECIAL_FRUIT : Common.FRUIT; // 15% chance for golden apple
     }
 
     public boolean isAlive() {
