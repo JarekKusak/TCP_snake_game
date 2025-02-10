@@ -19,10 +19,13 @@ public class Client {
     private byte roundStatus;
     private boolean invalidMove = false; // Flag to track invalid inputs
 
+    private int playerId;
     private int connectedPlayers;
     private byte currentRound;
     private int[] scores;
     private String[] playerNames;
+    private boolean[] playerBlindness;
+    private Position[] playerPositions;
 
     /**
      * Constructs the client, establishing a connection to the server and sending the nickname.
@@ -45,14 +48,22 @@ public class Client {
 
         scores = new int[Common.MAX_PLAYERS];
         playerNames = new String[Common.MAX_PLAYERS];
+        playerBlindness = new boolean[Common.MAX_PLAYERS];
+        playerPositions = new Position[Common.MAX_PLAYERS];
+        for (int i = 0; i < Common.MAX_PLAYERS; i++) {
+            playerPositions[i] = new Position(0, 0); // Defaultně nastavíme všechny hráče na (0,0)
+        }
     }
 
     /**
-     * Receives the current game state from the server, including player scores.
+     * Receives the current game state from the server, including player positions and blindness states.
      *
      * @throws IOException if there is an I/O error while reading from the server
      */
     private void receiveGameState() throws IOException {
+        // first, get the player's own ID
+        playerId = in.readInt();
+
         for (int y = 0; y < Common.MATRIX_SIZE; y++) {
             for (int x = 0; x < Common.MATRIX_SIZE; x++) {
                 matrix[y][x] = in.readByte();
@@ -62,14 +73,24 @@ public class Client {
         roundStatus = in.readByte();
         currentRound = in.readByte();
 
-        // receive player names
         for (int i = 0; i < connectedPlayers; i++) {
             playerNames[i] = in.readUTF();
         }
 
-        // receive scores of connected players
         for (int i = 0; i < connectedPlayers; i++) {
             scores[i] = in.readInt();
+        }
+
+        // receive player positions
+        for (int i = 0; i < connectedPlayers; i++) {
+            int x = in.readInt();
+            int y = in.readInt();
+            playerPositions[i] = new Position(x, y);
+        }
+
+        // receive player blindness status
+        for (int i = 0; i < connectedPlayers; i++) {
+            playerBlindness[i] = in.readBoolean();
         }
     }
 
@@ -140,12 +161,21 @@ public class Client {
         }
         System.out.println("╗");
 
+        // get player's position
+        Position playerHead = playerPositions[playerId];
+
         // print game matrix with left and right borders
         for (int y = 0; y < Common.MATRIX_SIZE; y++) {
             System.out.print("║"); // left border
             for (int x = 0; x < Common.MATRIX_SIZE; x++) {
                 String color = Common.RESET_COLOR;
                 char cell = (char) matrix[y][x];
+
+                // if the player is blinded, restrict their vision
+                if (playerBlindness[playerId] && !isNearPlayer(x, y, playerHead)) {
+                    System.out.print("? ");
+                    continue;
+                }
 
                 // assign colors to different players
                 switch (cell) {
@@ -168,6 +198,28 @@ public class Client {
         System.out.println("╝");
 
         renderScoreboard();
+    }
+
+    /**
+     * Determines if a given coordinate is within the player's visible area when blinded.
+     *
+     * @param x The x coordinate of the cell
+     * @param y The y coordinate of the cell
+     * @param playerHead The position of the player's head
+     * @return true if the cell is within the visible area, false otherwise
+     */
+    private boolean isNearPlayer(int x, int y, Position playerHead) {
+        int px = playerHead.x;
+        int py = playerHead.y;
+
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (px + dx == x && py + dy == y) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

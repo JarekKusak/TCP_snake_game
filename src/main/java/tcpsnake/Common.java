@@ -18,6 +18,7 @@ public class Common {
     public static final byte EMPTY = '.';
     public static final byte FRUIT = 'O';
     public static final byte SPECIAL_FRUIT = '*'; // Special golden apple
+    public static final byte POWERUP_BLIND = '&'; // New PowerUp item
     public static final byte OBSTACLE = '#';
 
     // Players

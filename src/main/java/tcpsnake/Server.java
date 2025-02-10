@@ -161,12 +161,15 @@ public class Server {
     }
 
     /**
-     * Sends the current game state (the matrix and round status) to all connected players.
+     * Sends the current game state (matrix, player positions, scores, and blindness status) to all connected players.
      *
      * @throws IOException if an I/O error occurs while sending data
      */
     private void broadcastGameState() throws IOException {
         for (int i = 0; i < connectedPlayers; i++) {
+            // send playerId to each client
+            outputStreams[i].writeInt(i); // Sending player's own ID
+
             // send game matrix
             for (int y = 0; y < MATRIX_SIZE; y++) {
                 for (int x = 0; x < MATRIX_SIZE; x++) {
@@ -184,9 +187,21 @@ public class Server {
                 outputStreams[i].writeUTF(playerNames[j]);
             }
 
-            // send total scores of all players
+            // send player scores
             for (int j = 0; j < connectedPlayers; j++) {
                 outputStreams[i].writeInt(totalScores[j]);
+            }
+
+            // send player positions (x, y)
+            for (int j = 0; j < connectedPlayers; j++) {
+                Position head = players[j].getHeadPosition();
+                outputStreams[i].writeInt(head.x);
+                outputStreams[i].writeInt(head.y);
+            }
+
+            // send player blindness status
+            for (int j = 0; j < connectedPlayers; j++) {
+                outputStreams[i].writeBoolean(players[j].isBlind());
             }
 
             outputStreams[i].flush();
@@ -220,7 +235,15 @@ public class Server {
             x = rand.nextInt(MATRIX_SIZE);
             y = rand.nextInt(MATRIX_SIZE);
         } while (matrix[y][x] != Common.EMPTY);
-        matrix[y][x] = Common.FRUIT;
+
+        double chance = rand.nextDouble();
+        if (chance < 0.99) {
+            matrix[y][x] = Common.POWERUP_BLIND; // 10% šance na PowerUp
+        } else if (chance < 0.01) {
+            matrix[y][x] = Common.SPECIAL_FRUIT; // 20% šance na zlaté jablko
+        } else {
+            matrix[y][x] = Common.FRUIT; // 70% běžné jablko
+        }
     }
 
     /**
@@ -343,34 +366,6 @@ public class Server {
 }
 
 /**
- * Represents a position with x and y coordinates.
- */
-class Position {
-    int x, y;
-
-    /**
-     * Constructs a Position with the given x and y coordinates.
-     *
-     * @param x the x coordinate
-     * @param y the y coordinate
-     */
-    Position(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    /**
-     * Updates this position by adding the given direction's x and y values to this position's coordinates.
-     *
-     * @param direction the direction to update this position with
-     */
-    void update(Position direction) {
-        this.x += direction.x;
-        this.y += direction.y;
-    }
-}
-
-/**
  * The Player class represents a snake player, tracking movement and interactions.
  */
 class Player {
@@ -388,6 +383,46 @@ class Player {
         this.body = new LinkedList<>();
         this.body.add(new Position(position.x, position.y));
         this.direction = direction;
+    }
+
+    private boolean isBlind = false; // Indicates if player is blinded
+
+    /**
+     * Sets the blindness status for the player.
+     *
+     * @param blind true if the player should be blinded, false otherwise
+     */
+    public void setBlind(boolean blind) {
+        this.isBlind = blind;
+        if (blind) {
+            new Thread(() -> {
+                try {
+                    Thread.sleep(3000); // Blindness lasts 3 seconds
+                    this.isBlind = false;
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+    }
+
+    /**
+     * Returns the current position of the player's head.
+     *
+     * @return Position object representing the head's coordinates.
+     */
+    public Position getHeadPosition() {
+        return body.getFirst();
+    }
+
+
+    /**
+     * Returns whether the player is currently blinded.
+     *
+     * @return true if the player is blinded, false otherwise
+     */
+    public boolean isBlind() {
+        return isBlind;
     }
 
     /**
@@ -437,7 +472,8 @@ class Player {
         }
 
         // if the player hits any body segment (not head), they die alone
-        if (cell != Common.EMPTY && cell != Common.FRUIT && cell != Common.SPECIAL_FRUIT) {
+        if (cell != Common.EMPTY && cell != Common.FRUIT
+                && cell != Common.SPECIAL_FRUIT && cell != Common.POWERUP_BLIND) {
             alive = false;
             scores[id] -= 30;
             clearBodyFromMatrix(matrix);
@@ -452,6 +488,10 @@ class Player {
         } else if (cell == Common.SPECIAL_FRUIT) {
             grew = true;
             scores[id] += 20;
+            generateApple(matrix, players);
+        } else if (cell == Common.POWERUP_BLIND) {
+            scores[id] += 15; // Bonus za sebrání PowerUpu
+            activateBlindness(players);
             generateApple(matrix, players);
         }
 
@@ -483,6 +523,14 @@ class Player {
     private void clearBodyFromMatrix(byte[][] matrix) {
         for (Position segment : body) {
             matrix[segment.y][segment.x] = Common.EMPTY;
+        }
+    }
+
+    private void activateBlindness(Player[] players) {
+        for (Player other : players) {
+            if (other != null && other.isAlive() && other != this) {
+                other.setBlind(true);
+            }
         }
     }
 
@@ -526,7 +574,14 @@ class Player {
             }
         } while (!validPosition);
 
-        matrix[y][x] = rand.nextDouble() < 0.33 ? Common.SPECIAL_FRUIT : Common.FRUIT;
+        double chance = rand.nextDouble();
+        if (chance < 0.99) {
+            matrix[y][x] = Common.POWERUP_BLIND; // 10% šance na PowerUp
+        } else if (chance < 0.01) {
+            matrix[y][x] = Common.SPECIAL_FRUIT; // 20% šance na zlaté jablko
+        } else {
+            matrix[y][x] = Common.FRUIT; // 70% běžné jablko
+        }
     }
 
 
