@@ -437,7 +437,7 @@ class Player {
         }
 
         // if the player hits any body segment (not head), they die alone
-        if (cell == Common.PLAYER_BODIES[id]) {
+        if (cell != Common.EMPTY && cell != Common.FRUIT && cell != Common.SPECIAL_FRUIT) {
             alive = false;
             scores[id] -= 30;
             clearBodyFromMatrix(matrix);

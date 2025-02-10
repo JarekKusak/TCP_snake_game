@@ -77,8 +77,6 @@ public class Client {
      * Renders the scoreboard next to the game matrix.
      */
     private void renderScoreboard() {
-        System.out.println();
-
         // top border
         System.out.print("╔");
         for (int i = 0; i < connectedPlayers; i++) {
