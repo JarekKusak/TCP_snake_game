@@ -237,12 +237,12 @@ public class Server {
         } while (matrix[y][x] != Common.EMPTY);
 
         double chance = rand.nextDouble();
-        if (chance < 0.99) {
-            matrix[y][x] = Common.POWERUP_BLIND; // 10% šance na PowerUp
-        } else if (chance < 0.01) {
-            matrix[y][x] = Common.SPECIAL_FRUIT; // 20% šance na zlaté jablko
+        if (chance < 0.10) {
+            matrix[y][x] = Common.POWERUP_BLIND;
+        } else if (chance < 0.30) {
+            matrix[y][x] = Common.SPECIAL_FRUIT;
         } else {
-            matrix[y][x] = Common.FRUIT; // 70% běžné jablko
+            matrix[y][x] = Common.FRUIT;
         }
     }
 
@@ -375,6 +375,7 @@ class Player {
     private boolean alive = true;
     private boolean grew = false;
     private int score = 0;
+    private boolean isBlind = false; // Indicates if player is blinded
     /**
      * Initializes a new player with a head position and movement direction.
      */
@@ -384,8 +385,6 @@ class Player {
         this.body.add(new Position(position.x, position.y));
         this.direction = direction;
     }
-
-    private boolean isBlind = false; // Indicates if player is blinded
 
     /**
      * Sets the blindness status for the player.
@@ -526,6 +525,17 @@ class Player {
         }
     }
 
+    /**
+     * Activates the blindness effect for all other players in the game.
+     * When a player collects a blinding PowerUp, this method sets the blindness
+     * status for all other alive players, temporarily restricting their vision.
+     *
+     * The blindness effect is handled by the `setBlind(true)` method,
+     * which starts a timer to disable blindness after a predefined duration.
+     *
+     * @param players Array of all players in the game.
+     *                The effect is applied to every alive player except the one who activated it.
+     */
     private void activateBlindness(Player[] players) {
         for (Player other : players) {
             if (other != null && other.isAlive() && other != this) {
@@ -551,6 +561,18 @@ class Player {
         }
     }
 
+    /**
+     * Generates an apple (fruit) in a random empty position on the matrix.
+     * The apple will not spawn on a player's body.
+     *
+     * There is a probability distribution for spawning different types of items:
+     * - 30% chance to spawn a PowerUp that blinds other players.
+     * - 10% chance to spawn a special golden apple.
+     * - Otherwise, a normal fruit is spawned.
+     *
+     * @param matrix The game matrix representing the playfield.
+     * @param players Array of all players in the game, to avoid spawning apples on them.
+     */
     private void generateApple(byte[][] matrix, Player[] players) {
         Random rand = new Random();
         int x, y;
@@ -561,7 +583,7 @@ class Player {
             y = rand.nextInt(matrix[0].length);
             validPosition = matrix[y][x] == Common.EMPTY;
 
-            // prevent apple from spawning on a snake
+            // Prevent apple from spawning on a snake
             for (Player player : players) {
                 if (player != null && player.isAlive()) {
                     for (Position segment : player.body) {
@@ -575,24 +597,38 @@ class Player {
         } while (!validPosition);
 
         double chance = rand.nextDouble();
-        if (chance < 0.99) {
-            matrix[y][x] = Common.POWERUP_BLIND; // 10% šance na PowerUp
-        } else if (chance < 0.01) {
-            matrix[y][x] = Common.SPECIAL_FRUIT; // 20% šance na zlaté jablko
+        if (chance < 0.10) {
+            matrix[y][x] = Common.POWERUP_BLIND; // 10% chance for blinding PowerUp
+        } else if (chance < 0.30) {
+            matrix[y][x] = Common.SPECIAL_FRUIT; // 30% chance for golden apple
         } else {
-            matrix[y][x] = Common.FRUIT; // 70% běžné jablko
+            matrix[y][x] = Common.FRUIT; // Default case for normal apple
         }
     }
 
-
+    /**
+     * Checks if the player is still alive.
+     *
+     * @return {@code true} if the player is alive, {@code false} otherwise.
+     */
     public boolean isAlive() {
         return alive;
     }
 
+    /**
+     * Gets the current score of the player.
+     *
+     * @return The player's score.
+     */
     public int getScore() {
         return score;
     }
 
+    /**
+     * Gets the player's unique ID.
+     *
+     * @return The player's ID.
+     */
     public int getId() {
         return id;
     }
