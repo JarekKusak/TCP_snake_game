@@ -150,17 +150,31 @@ public class Server {
      */
     private void broadcastGameState() throws IOException {
         for (int i = 0; i < connectedPlayers; i++) {
+            // send game matrix
             for (int y = 0; y < MATRIX_SIZE; y++) {
                 for (int x = 0; x < MATRIX_SIZE; x++) {
                     outputStreams[i].writeByte(matrix[y][x]);
                 }
             }
+
+            // send game metadata
+            outputStreams[i].writeInt(connectedPlayers);
             outputStreams[i].writeByte(roundStatus);
-            outputStreams[i].writeByte(currentRound); // Posíláme číslo aktuálního kola
+            outputStreams[i].writeByte(currentRound);
+
+            // send player names
+            for (int j = 0; j < connectedPlayers; j++) {
+                outputStreams[i].writeUTF(playerNames[j]);
+            }
+
+            // send player scores
+            for (int j = 0; j < connectedPlayers; j++) {
+                outputStreams[i].writeInt(players[j].getScore());
+            }
+
             outputStreams[i].flush();
         }
     }
-
 
     /**
      * Resets the game state by clearing the matrix, resetting players, and generating a new apple.
@@ -434,7 +448,7 @@ class Player {
             y = rand.nextInt(matrix[0].length);
         } while (matrix[y][x] != Common.EMPTY);
 
-        matrix[y][x] = rand.nextDouble() < 0.99 ? Common.SPECIAL_FRUIT : Common.FRUIT; // 15% chance for golden apple
+        matrix[y][x] = rand.nextDouble() < 0.33 ? Common.SPECIAL_FRUIT : Common.FRUIT; // 33% chance for golden apple
     }
 
     public boolean isAlive() {

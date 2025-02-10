@@ -19,7 +19,11 @@ public class Client {
     private byte roundStatus;
     private boolean invalidMove = false; // Flag to track invalid inputs
 
+    private int connectedPlayers;
     private byte currentRound;
+    private int[] scores;
+    private String[] playerNames;
+
     /**
      * Constructs the client, establishing a connection to the server and sending the nickname.
      *
@@ -38,10 +42,13 @@ public class Client {
             System.exit(1);
         }
         System.out.println("Connected to server.");
+
+        scores = new int[Common.MAX_PLAYERS];
+        playerNames = new String[Common.MAX_PLAYERS];
     }
 
     /**
-     * Receives the current game state from the server and updates the local matrix.
+     * Receives the current game state from the server, including player scores.
      *
      * @throws IOException if there is an I/O error while reading from the server
      */
@@ -51,8 +58,65 @@ public class Client {
                 matrix[y][x] = in.readByte();
             }
         }
+        connectedPlayers = in.readInt();
         roundStatus = in.readByte();
         currentRound = in.readByte();
+
+        // receive player names
+        for (int i = 0; i < connectedPlayers; i++) {
+            playerNames[i] = in.readUTF();
+        }
+
+        // receive scores of connected players
+        for (int i = 0; i < connectedPlayers; i++) {
+            scores[i] = in.readInt();
+        }
+    }
+
+    /**
+     * Renders the scoreboard next to the game matrix.
+     */
+    private void renderScoreboard() {
+        System.out.println();
+
+        // top border
+        System.out.print("╔");
+        for (int i = 0; i < connectedPlayers; i++) {
+            System.out.print("══════════");
+            if (i < connectedPlayers - 1) System.out.print("╦");
+        }
+        System.out.println("╗");
+
+        // player names
+        System.out.print("║");
+        for (int i = 0; i < connectedPlayers; i++) {
+            String name = playerNames[i];
+            System.out.printf(" %-8s ║", name);
+        }
+        System.out.println();
+
+        // middle border
+        System.out.print("╠");
+        for (int i = 0; i < connectedPlayers; i++) {
+            System.out.print("══════════");
+            if (i < connectedPlayers - 1) System.out.print("╬");
+        }
+        System.out.println("╣");
+
+        // player scores
+        System.out.print("║");
+        for (int i = 0; i < connectedPlayers; i++) {
+            System.out.printf(" %8d ║", scores[i]);
+        }
+        System.out.println();
+
+        // bottom border
+        System.out.print("╚");
+        for (int i = 0; i < connectedPlayers; i++) {
+            System.out.print("══════════");
+            if (i < connectedPlayers - 1) System.out.print("╩");
+        }
+        System.out.println("╝");
     }
 
     /**
@@ -104,6 +168,8 @@ public class Client {
             System.out.print("═");
         }
         System.out.println("╝");
+
+        renderScoreboard();
     }
 
     /**
