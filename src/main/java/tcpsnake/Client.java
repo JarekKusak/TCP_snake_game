@@ -6,8 +6,6 @@ import java.net.*;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
-import java.util.Scanner;
-
 /**
  * Handles the client-side of the TCP Snake game.
  * Connects to the server, sends user input, and receives game state updates to render the game.
@@ -19,6 +17,7 @@ public class Client {
 
     private byte[][] matrix = new byte[Common.MATRIX_SIZE][Common.MATRIX_SIZE];
     private byte roundStatus;
+    private boolean invalidMove = false; // Flag to track invalid inputs
 
     /**
      * Constructs the client, establishing a connection to the server and sending the nickname.
@@ -58,22 +57,27 @@ public class Client {
      * Renders the current state of the game matrix to the console.
      */
     private void renderGame() {
+        if (invalidMove) {
+            System.out.println("Invalid move. Use W, A, S, or D.");
+        }
+        System.out.println("\nRound: " + roundStatus*(-1)); // display round number correctly
+        // display error message if last move was invalid
         for (int y = 0; y < Common.MATRIX_SIZE; y++) {
             for (int x = 0; x < Common.MATRIX_SIZE; x++) {
-                char displayChar = switch (matrix[y][x]) {
-                    case Common.EMPTY -> '.';
-                    case Common.FRUIT -> 'O';
-                    case Common.P1_HEAD -> 'X';
-                    case Common.P2_HEAD -> 'Y';
-                    case Common.P1_BODY -> 'x';
-                    case Common.P2_BODY -> 'y';
-                    default -> '?';
-                };
-                System.out.print(" " + displayChar + " ");
+                String color = Common.RESET_COLOR;
+                char cell = (char) matrix[y][x];
+
+                switch (cell) {
+                    case 'X', 'x' -> color = Common.P1_COLOR; // Player 1 (red)
+                    case 'Y', 'y' -> color = Common.P2_COLOR; // Player 2 (blue)
+                    case 'Z', 'z' -> color = Common.P3_COLOR; // Player 3 (green)
+                    case 'W', 'w' -> color = Common.P4_COLOR; // Player 4 (yellow)
+                }
+
+                System.out.print(color + " " + cell + " " + Common.RESET_COLOR);
             }
             System.out.println();
         }
-        System.out.println("Round Status: " + roundStatus);
     }
 
     /**
@@ -81,8 +85,15 @@ public class Client {
      *
      * @param input the command to send
      */
-    private void sendInput(String input) {
-        out.println(input);
+    private void sendInput(char input) {
+        char direction = Character.toUpperCase(input);
+
+        if (direction == 'W' || direction == 'A' || direction == 'S' || direction == 'D') {
+            out.println(direction);
+            invalidMove = false; // Valid move, reset error flag
+        } else {
+            invalidMove = true; // Invalid move detected
+        }
     }
 
     /**
@@ -121,20 +132,15 @@ public class Client {
             while (true) {
                 int ch = reader.read();
                 if (ch == -1) {
-                    System.out.println("EOF? Končíme...");
+                    System.out.println("EOF? Exiting...");
+                    break;
+                }
+                if (ch == 27) { // ESC key to quit
+                    System.out.println("Exiting game.");
                     break;
                 }
 
-                if (ch == 27) { // ESC
-                    System.out.println("Ukončuji program");
-                    break;
-                }
-
-                char c = (char) ch;
-                char direction = Character.toUpperCase(c);
-                if (direction == 'W' || direction == 'A' || direction == 'S' || direction == 'D') {
-                    sendInput(String.valueOf(direction));
-                }
+                sendInput((char) ch);
             }
 
             terminal.close();

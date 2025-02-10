@@ -334,33 +334,28 @@ class Position {
 }
 
 /**
- * Represents a player in the Snake game, including the snake's body and movement logic.
+ * The Player class represents a snake player, tracking movement and interactions.
  */
 class Player {
     private int id;
-    private LinkedList<Position> body; // stores the entire snake
+    private LinkedList<Position> body;
     private Position direction;
     private boolean alive = true;
-    private boolean grew = false; // indicator of growth when an apple is eaten
+    private boolean grew = false;
+    private int score = 0;
 
     /**
-     * Constructs a Player with a given ID, initial position, and direction.
-     *
-     * @param id the player's ID
-     * @param position the initial position of the player's snake
-     * @param direction the initial direction of the player's snake
+     * Initializes a new player with a head position and movement direction.
      */
     public Player(int id, Position position, Position direction) {
         this.id = id;
         this.body = new LinkedList<>();
-        this.body.add(new Position(position.x, position.y)); // snake starts with only the head
+        this.body.add(new Position(position.x, position.y));
         this.direction = direction;
     }
 
     /**
-     * Moves the player's snake based on its current direction and updates the game matrix accordingly.
-     *
-     * @param matrix the game matrix representing the playing field
+     * Moves the player forward, handling wall wrapping and collisions.
      */
     public void move(byte[][] matrix) {
         if (!alive) return;
@@ -368,26 +363,29 @@ class Player {
         Position head = body.getFirst();
         Position newHead = new Position(head.x + direction.x, head.y + direction.y);
 
-        // crossing the map edges
+        // Wall wrapping
         if (newHead.x < 0) newHead.x = matrix.length - 1;
         else if (newHead.x >= matrix.length) newHead.x = 0;
         if (newHead.y < 0) newHead.y = matrix[0].length - 1;
         else if (newHead.y >= matrix[0].length) newHead.y = 0;
 
-        // collision detection with itself or another player using matrix
-        if (matrix[newHead.y][newHead.x] != Common.EMPTY && matrix[newHead.y][newHead.x] != Common.FRUIT) {
+        // Collision detection
+        if (matrix[newHead.y][newHead.x] != Common.EMPTY && matrix[newHead.y][newHead.x] != Common.FRUIT && matrix[newHead.y][newHead.x] != Common.SPECIAL_FRUIT) {
             alive = false;
             return;
         }
 
-        // eating an apple
-        boolean ateApple = matrix[newHead.y][newHead.x] == Common.FRUIT;
-        if (ateApple) {
+        // Eating apple
+        if (matrix[newHead.y][newHead.x] == Common.FRUIT) {
             grew = true;
-            generateNewApple(matrix); // generate a new apple
+            score += 10;
+            generateNewApple(matrix);
+        } else if (matrix[newHead.y][newHead.x] == Common.SPECIAL_FRUIT) {
+            grew = true;
+            score += 20;
+            generateNewApple(matrix);
         }
 
-        // moving the snake and removing the tail (if it did not eat an apple)
         if (!grew) {
             Position tail = body.removeLast();
             matrix[tail.y][tail.x] = Common.EMPTY;
@@ -395,21 +393,18 @@ class Player {
             grew = false;
         }
 
-        // adding a new head to the snake's body
+        // Move head
         body.addFirst(newHead);
-        matrix[newHead.y][newHead.x] = id == 0 ? Common.P1_HEAD : Common.P2_HEAD;
+        matrix[newHead.y][newHead.x] = Common.PLAYER_HEADS[id];
 
         for (int i = 1; i < body.size(); i++) {
             Position segment = body.get(i);
-            matrix[segment.y][segment.x] = id == 0 ? Common.P1_BODY : Common.P2_BODY;
+            matrix[segment.y][segment.x] = Common.PLAYER_BODIES[id];
         }
     }
 
     /**
-     * Changes the snake's direction based on the given character command (W, A, S, D).
-     * Prevents reversing direction by 180 degrees if the snake is longer than 1 segment.
-     *
-     * @param input the character command specifying the new direction
+     * Changes the direction of movement based on player input.
      */
     public void changeDirection(char input) {
         Position newDirection = switch (input) {
@@ -420,17 +415,11 @@ class Player {
             default -> direction;
         };
 
-        // prevent 180° turn
         if (body.size() == 1 || !(newDirection.x == -direction.x && newDirection.y == -direction.y)) {
             direction = newDirection;
         }
     }
 
-    /**
-     * Generates a new apple on the game matrix at a random empty location.
-     *
-     * @param matrix the game matrix
-     */
     private void generateNewApple(byte[][] matrix) {
         Random rand = new Random();
         int x, y;
@@ -438,15 +427,15 @@ class Player {
             x = rand.nextInt(matrix.length);
             y = rand.nextInt(matrix[0].length);
         } while (matrix[y][x] != Common.EMPTY);
-        matrix[y][x] = Common.FRUIT;
+
+        matrix[y][x] = rand.nextDouble() < 0.15 ? Common.SPECIAL_FRUIT : Common.FRUIT; // 15% chance for golden apple
     }
 
-    /**
-     * Checks if this player's snake is still alive.
-     *
-     * @return true if the snake is alive, false otherwise
-     */
     public boolean isAlive() {
         return alive;
+    }
+
+    public int getScore() {
+        return score;
     }
 }
