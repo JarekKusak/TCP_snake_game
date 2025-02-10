@@ -69,27 +69,41 @@ public class Server {
         System.out.println("All players connected. Starting the game...");
     }
 
+    private int[] totalScores = new int[MAX_PLAYERS]; // stores total scores across all rounds
+
     /**
      * Starts the game, including multiple rounds if specified.
      * Manages the main game loop and handles round transitions.
      */
     public void startGame() {
         try {
-            for (int round = 1; round <= rounds; round++) {
+            for (currentRound = 1; currentRound <= rounds; currentRound++) {
                 roundStatus = Common.ROUND_STARTED;
-                System.out.println("Round " + round + " started.");
+                System.out.println("Round " + currentRound + " started.");
                 resetGameState();
-                System.out.println("Starting Round " + currentRound);
-                //currentRound = round;
                 playRound();
-                currentRound++;
                 roundStatus = Common.ROUND_END;
-                System.out.println("Round " + round + " ended.");
+                System.out.println("Round " + currentRound + " ended.");
                 Thread.sleep(2000);
             }
             roundStatus = Common.END_FINAL;
-            System.out.println("Game over!");
+
+            // find the player with the highest score
+            int maxScore = Integer.MIN_VALUE;
+            String winner = "No one";
+            for (int i = 0; i < connectedPlayers; i++) {
+                if (totalScores[i] > maxScore) {
+                    maxScore = totalScores[i];
+                    winner = playerNames[i];
+                }
+            }
+
+            System.out.println("🏆 Winner: " + winner + " with " + maxScore + " points!");
+
+            // send final game state to all players (now including the winner)
             broadcastGameState();
+
+            System.out.println("Game over!");
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -104,34 +118,37 @@ public class Server {
      * @throws InterruptedException if the thread is interrupted while sleeping
      */
     private void playRound() throws IOException, InterruptedException {
-        while (true) {
-            // processing player commands
+        while (!isRoundOver()) { // continue until only one player is left
             for (int i = 0; i < connectedPlayers; i++) {
                 String command = playerCommands[i].poll();
                 if (command != null) {
                     players[i].changeDirection(command.charAt(0));
                 }
-                players[i].move(matrix);
-            }
-
-            if (isRoundOver()) {
-                // final rendering before ending the game
-                broadcastGameState();
-                // 2 second pause so that players can see the result
-                Thread.sleep(2000);
-                break;
+                players[i].move(matrix, players, totalScores);
             }
 
             broadcastGameState();
-
             Thread.sleep(250);
         }
+
+        // last player standing gets a small bonus
+        for (Player player : players) {
+            if (player != null && player.isAlive()) {
+                totalScores[player.getId()] += 10; // bonus for survival
+                System.out.println("🏅 Player " + playerNames[player.getId()] + " survived and earned +10 points!");
+                break;
+            }
+        }
+
+        // final rendering before ending the round
+        broadcastGameState();
+        Thread.sleep(2000);
     }
 
     /**
      * Checks if the round is over by counting how many players are still alive.
      *
-     * @return true if the round is over, false otherwise
+     * @return true if only one player is left alive, false otherwise
      */
     private boolean isRoundOver() {
         int alivePlayers = 0;
@@ -140,7 +157,7 @@ public class Server {
                 alivePlayers++;
             }
         }
-        return alivePlayers < connectedPlayers;
+        return alivePlayers <= 1; // round ends when only one player is left
     }
 
     /**
@@ -167,9 +184,9 @@ public class Server {
                 outputStreams[i].writeUTF(playerNames[j]);
             }
 
-            // send player scores
+            // send total scores of all players
             for (int j = 0; j < connectedPlayers; j++) {
-                outputStreams[i].writeInt(players[j].getScore());
+                outputStreams[i].writeInt(totalScores[j]);
             }
 
             outputStreams[i].flush();
@@ -363,7 +380,6 @@ class Player {
     private boolean alive = true;
     private boolean grew = false;
     private int score = 0;
-
     /**
      * Initializes a new player with a head position and movement direction.
      */
@@ -375,37 +391,71 @@ class Player {
     }
 
     /**
-     * Moves the player forward, handling wall wrapping and collisions.
+     * Moves the player forward, handling wall wrapping, collisions, and score updates.
+     *
+     * @param matrix the game matrix representing the playfield
+     * @param players array of all players in the game
+     * @param scores array tracking player scores across all rounds
      */
-    public void move(byte[][] matrix) {
+    public void move(byte[][] matrix, Player[] players, int[] scores) {
         if (!alive) return;
 
         Position head = body.getFirst();
         Position newHead = new Position(head.x + direction.x, head.y + direction.y);
 
-        // wall wrapping
+        // wall wrapping logic
         if (newHead.x < 0) newHead.x = matrix.length - 1;
         else if (newHead.x >= matrix.length) newHead.x = 0;
         if (newHead.y < 0) newHead.y = matrix[0].length - 1;
         else if (newHead.y >= matrix[0].length) newHead.y = 0;
 
-        // collision detection
-        if (matrix[newHead.y][newHead.x] != Common.EMPTY && matrix[newHead.y][newHead.x] != Common.FRUIT && matrix[newHead.y][newHead.x] != Common.SPECIAL_FRUIT) {
+        byte cell = matrix[newHead.y][newHead.x];
+
+        // check if the new position collides with another player's head
+        boolean isHeadCollision = false;
+        int otherPlayerId = -1;
+
+        for (int i = 0; i < players.length; i++) {
+            if (players[i] != null && players[i].isAlive() && players[i] != this) {
+                if (cell == Common.PLAYER_HEADS[i]) { // Check if we collide with another head
+                    isHeadCollision = true;
+                    otherPlayerId = i;
+                    break;
+                }
+            }
+        }
+
+        // if it's a head-on collision, both players die
+        if (isHeadCollision) {
             alive = false;
+            players[otherPlayerId].alive = false;
+            scores[id] -= 20;
+            scores[otherPlayerId] -= 20;
+            clearBodyFromMatrix(matrix);
+            players[otherPlayerId].clearBodyFromMatrix(matrix);
+            return; // both players die immediately, exit method
+        }
+
+        // if the player hits any body segment (not head), they die alone
+        if (cell == Common.PLAYER_BODIES[id]) {
+            alive = false;
+            scores[id] -= 30;
+            clearBodyFromMatrix(matrix);
             return;
         }
 
-        // eating apple
-        if (matrix[newHead.y][newHead.x] == Common.FRUIT) {
+        // fruit collection logic
+        if (cell == Common.FRUIT) {
             grew = true;
-            score += 10;
-            generateNewApple(matrix);
-        } else if (matrix[newHead.y][newHead.x] == Common.SPECIAL_FRUIT) {
+            scores[id] += 10;
+            generateApple(matrix, players);
+        } else if (cell == Common.SPECIAL_FRUIT) {
             grew = true;
-            score += 20;
-            generateNewApple(matrix);
+            scores[id] += 20;
+            generateApple(matrix, players);
         }
 
+        // if player didn't eat fruit, remove tail (otherwise, keep growing)
         if (!grew) {
             Position tail = body.removeLast();
             matrix[tail.y][tail.x] = Common.EMPTY;
@@ -413,13 +463,26 @@ class Player {
             grew = false;
         }
 
-        // Move head
+        // move head forward
         body.addFirst(newHead);
         matrix[newHead.y][newHead.x] = Common.PLAYER_HEADS[id];
 
+        // update the rest of the body in the matrix
         for (int i = 1; i < body.size(); i++) {
             Position segment = body.get(i);
             matrix[segment.y][segment.x] = Common.PLAYER_BODIES[id];
+        }
+    }
+
+
+    /**
+     * Removes the player's body from the matrix when they die.
+     *
+     * @param matrix the game matrix
+     */
+    private void clearBodyFromMatrix(byte[][] matrix) {
+        for (Position segment : body) {
+            matrix[segment.y][segment.x] = Common.EMPTY;
         }
     }
 
@@ -440,16 +503,32 @@ class Player {
         }
     }
 
-    private void generateNewApple(byte[][] matrix) {
+    private void generateApple(byte[][] matrix, Player[] players) {
         Random rand = new Random();
         int x, y;
+        boolean validPosition;
+
         do {
             x = rand.nextInt(matrix.length);
             y = rand.nextInt(matrix[0].length);
-        } while (matrix[y][x] != Common.EMPTY);
+            validPosition = matrix[y][x] == Common.EMPTY;
 
-        matrix[y][x] = rand.nextDouble() < 0.33 ? Common.SPECIAL_FRUIT : Common.FRUIT; // 33% chance for golden apple
+            // prevent apple from spawning on a snake
+            for (Player player : players) {
+                if (player != null && player.isAlive()) {
+                    for (Position segment : player.body) {
+                        if (segment.x == x && segment.y == y) {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        } while (!validPosition);
+
+        matrix[y][x] = rand.nextDouble() < 0.33 ? Common.SPECIAL_FRUIT : Common.FRUIT;
     }
+
 
     public boolean isAlive() {
         return alive;
@@ -457,5 +536,9 @@ class Player {
 
     public int getScore() {
         return score;
+    }
+
+    public int getId() {
+        return id;
     }
 }

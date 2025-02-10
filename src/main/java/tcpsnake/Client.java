@@ -182,9 +182,9 @@ public class Client {
 
         if (direction == 'W' || direction == 'A' || direction == 'S' || direction == 'D') {
             out.println(direction);
-            invalidMove = false; // Valid move, reset error flag
+            invalidMove = false; // valid move, reset error flag
         } else {
-            invalidMove = true; // Invalid move detected
+            invalidMove = true; // invalid move detected
         }
     }
 
