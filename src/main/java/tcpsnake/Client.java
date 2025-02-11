@@ -281,17 +281,30 @@ public class Client {
                     System.out.println("EOF? Exiting...");
                     break;
                 }
-                if (ch == 27) { // ESC key to quit
-                    System.out.println("Exiting game.");
 
-                    try {
-                        out.println("EXIT");
-                        socket.close();
-                    } catch (IOException e) {
-                        System.err.println("Error closing connection.");
+                if (ch == 27) { // ESC key
+                    if (reader.ready()) { // Pokud je další znak okamžitě dostupný, může jít o escape sekvenci
+                        int next1 = reader.read();
+                        if (next1 == '[') { // Escape sekvence (např. šipky)
+                            int next2 = reader.read();
+                            switch (next2) {
+                                case 'A': ch = 'W'; break; // Šipka nahoru → W
+                                case 'B': ch = 'S'; break; // Šipka dolů → S
+                                case 'C': ch = 'D'; break; // Šipka doprava → D
+                                case 'D': ch = 'A'; break; // Šipka doleva → A
+                                default: continue; // Pokud to není šipka, ignoruj
+                            }
+                        }
+                    } else { // ESC bez dalších znaků → ukončení hry
+                        System.out.println("Exiting game.");
+                        try {
+                            out.println("EXIT");
+                            socket.close();
+                        } catch (IOException e) {
+                            System.err.println("Error closing connection.");
+                        }
+                        System.exit(0);
                     }
-
-                    System.exit(0);
                 }
 
                 sendInput((char) ch);
