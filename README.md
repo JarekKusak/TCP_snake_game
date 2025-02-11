@@ -36,12 +36,12 @@ mvn clean package
 Pro spuštění serveru použijte následující příkaz:
 ```bash
 java -cp target/tcp-snake-game-1.0-SNAPSHOT.jar \
-    main.java.tcpsnake.Server <pocet_hracu> <port> <pocet_kol>
+    tcpsnake.Server <pocet_hracu> <port> <pocet_kol>
 ```
 Příklad spuštění serveru pro 2 hráče na portu 12345 s 5 koly:
 ```bash
 java -cp target/tcp-snake-game-1.0-SNAPSHOT.jar \
-    main.java.tcpsnake.Server 2 12345 5
+    tcpsnake.Server 2 12345 5
 ```
 ### 4.2 Spuštění serveru
 Každý hráč se připojuje ke stejnému serveru. Pro spuštění klienta použijte:
