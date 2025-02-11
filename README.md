@@ -66,6 +66,7 @@ mvn compile exec:java -Dexec.mainClass=tcpsnake.Client \
 - Hranice mapy (#) - Okraje herního pole, do kterých nelze narazit.
 
 ## 6. Ukázka hry
+```
 ╔═══════════════════════╗
 ║ . . . . x . . . . . . ║
 ║ . . . . x . O . . . . ║
@@ -76,6 +77,7 @@ mvn compile exec:java -Dexec.mainClass=tcpsnake.Client \
 ║ . . . . x x X . . . . ║
 ║ . . . . x . . . . . . ║
 ╚═══════════════════════╝
+```
 
 ## 7. Známé nedostatky
 - Neplatný vstup může způsobit zaseknutí konzole - Pokud hráč zmáčkne jinou klávesu než W, A, S, D nebo ESC, program nemusí správně reagovat.
