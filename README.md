@@ -43,7 +43,7 @@ Příklad spuštění serveru pro 2 hráče na portu 12345 s 5 koly:
 java -cp target/tcp-snake-game-1.0-SNAPSHOT.jar \
     tcpsnake.Server 2 12345 5
 ```
-### 4.2 Spuštění serveru
+### 4.2 Spuštění klientů
 Každý hráč se připojuje ke stejnému serveru. Pro spuštění klienta použijte:
 ```bash
 mvn compile exec:java -Dexec.mainClass=tcpsnake.Client \
