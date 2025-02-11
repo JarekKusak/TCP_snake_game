@@ -283,19 +283,19 @@ public class Client {
                 }
 
                 if (ch == 27) { // ESC key
-                    if (reader.ready()) { // Pokud je další znak okamžitě dostupný, může jít o escape sekvenci
+                    if (reader.ready()) { // if the next char is available, could be escape sequence
                         int next1 = reader.read();
-                        if (next1 == '[') { // Escape sekvence (např. šipky)
+                        if (next1 == '[') { // escape sequence (např. arrows)
                             int next2 = reader.read();
                             switch (next2) {
-                                case 'A': ch = 'W'; break; // Šipka nahoru → W
-                                case 'B': ch = 'S'; break; // Šipka dolů → S
-                                case 'C': ch = 'D'; break; // Šipka doprava → D
-                                case 'D': ch = 'A'; break; // Šipka doleva → A
-                                default: continue; // Pokud to není šipka, ignoruj
+                                case 'A': ch = 'W'; break; // up arrow → W
+                                case 'B': ch = 'S'; break; // down arrow → S
+                                case 'C': ch = 'D'; break; // right arrow → D
+                                case 'D': ch = 'A'; break; // left arrow → A
+                                default: continue; // not an arrow -> ignore
                             }
                         }
-                    } else { // ESC bez dalších znaků → ukončení hry
+                    } else { // ESC -> end of the game
                         System.out.println("Exiting game.");
                         try {
                             out.println("EXIT");
