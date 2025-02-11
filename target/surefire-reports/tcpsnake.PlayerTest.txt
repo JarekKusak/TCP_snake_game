@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: tcpsnake.PlayerTest
 -------------------------------------------------------------------------------
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.141 s -- in tcpsnake.PlayerTest
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.144 s -- in tcpsnake.PlayerTest
