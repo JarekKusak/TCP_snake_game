@@ -14,6 +14,11 @@ public class Common {
     public static final String P3_COLOR = "\u001B[32m"; // Green
     public static final String P4_COLOR = "\u001B[33m"; // Yellow
 
+    // Color codes for items
+    public static final String FRUIT_COLOR = "\u001B[33m"; // Yellow
+    public static final String SPECIAL_FRUIT_COLOR = "\u001B[35m"; // Purple
+    public static final String POWERUP_COLOR = "\u001B[36m"; // Cyan
+
     // Matrix cell types
     public static final byte EMPTY = '.';
     public static final byte FRUIT = 'O';

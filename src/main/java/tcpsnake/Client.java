@@ -183,6 +183,9 @@ public class Client {
                     case 'Y', 'y' -> color = Common.P2_COLOR; // Player 2 (blue)
                     case 'Z', 'z' -> color = Common.P3_COLOR; // Player 3 (green)
                     case 'W', 'w' -> color = Common.P4_COLOR; // Player 4 (yellow)
+                    case 'O' -> color = Common.FRUIT_COLOR; // yellow for normal fruit
+                    case '*' -> color = Common.SPECIAL_FRUIT_COLOR; // purple for special fruit
+                    case '&' -> color = Common.POWERUP_COLOR; // cyan for blindness power-up
                 }
 
                 System.out.print(color + cell + " " + Common.RESET_COLOR);
@@ -267,6 +270,7 @@ public class Client {
 
             // switch to raw mode keys go directly without enter
             terminal.enterRawMode();
+            terminal.echo(false);
 
             // get reader (character stream)
             java.io.Reader reader = terminal.reader();
@@ -279,7 +283,15 @@ public class Client {
                 }
                 if (ch == 27) { // ESC key to quit
                     System.out.println("Exiting game.");
-                    break;
+
+                    try {
+                        out.println("EXIT");
+                        socket.close();
+                    } catch (IOException e) {
+                        System.err.println("Error closing connection.");
+                    }
+
+                    System.exit(0);
                 }
 
                 sendInput((char) ch);

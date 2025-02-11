@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="tcpsnake.PlayerTest" time="3.145" tests="5" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="tcpsnake.PlayerTest" time="3.144" tests="5" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="23"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -12,7 +12,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="CZ"/>
     <property name="sun.boot.library.path" value="/opt/homebrew/Cellar/openjdk/23.0.1/libexec/openjdk.jdk/Contents/Home/lib"/>
-    <property name="sun.java.command" value="/Users/jaroslavkusak/Documents/programování/TCP_snake_game/target/surefire/surefirebooter-20250211105308123_3.jar /Users/jaroslavkusak/Documents/programování/TCP_snake_game/target/surefire 2025-02-11T10-53-08_075-jvmRun1 surefire-20250211105308123_1tmp surefire_0-20250211105308123_2tmp"/>
+    <property name="sun.java.command" value="/Users/jaroslavkusak/Documents/programování/TCP_snake_game/target/surefire/surefirebooter-20250211153145558_3.jar /Users/jaroslavkusak/Documents/programování/TCP_snake_game/target/surefire 2025-02-11T15-31-45_505-jvmRun1 surefire-20250211153145558_1tmp surefire_0-20250211153145558_2tmp"/>
     <property name="http.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="/Users/jaroslavkusak/Documents/programování/TCP_snake_game/target/test-classes:/Users/jaroslavkusak/Documents/programování/TCP_snake_game/target/classes:/Users/jaroslavkusak/.m2/repository/org/jline/jline-terminal/3.21.0/jline-terminal-3.21.0.jar:/Users/jaroslavkusak/.m2/repository/org/jline/jline-reader/3.21.0/jline-reader-3.21.0.jar:/Users/jaroslavkusak/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.10.3/junit-jupiter-api-5.10.3.jar:/Users/jaroslavkusak/.m2/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/Users/jaroslavkusak/.m2/repository/org/junit/platform/junit-platform-commons/1.10.3/junit-platform-commons-1.10.3.jar:/Users/jaroslavkusak/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/Users/jaroslavkusak/.m2/repository/org/junit/jupiter/junit-jupiter-engine/5.10.3/junit-jupiter-engine-5.10.3.jar:/Users/jaroslavkusak/.m2/repository/org/junit/platform/junit-platform-engine/1.10.3/junit-platform-engine-1.10.3.jar:"/>
@@ -29,7 +29,7 @@
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
     <property name="apple.awt.application.name" value="ForkedBooter"/>
-    <property name="surefire.real.class.path" value="/Users/jaroslavkusak/Documents/programování/TCP_snake_game/target/surefire/surefirebooter-20250211105308123_3.jar"/>
+    <property name="surefire.real.class.path" value="/Users/jaroslavkusak/Documents/programování/TCP_snake_game/target/surefire/surefirebooter-20250211153145558_3.jar"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="java.runtime.version" value="23.0.1"/>
@@ -58,9 +58,9 @@
     <property name="socksNonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="java.class.version" value="67.0"/>
   </properties>
-  <testcase name="testPlayerInitialization" classname="tcpsnake.PlayerTest" time="0.015"/>
-  <testcase name="testInitialScore" classname="tcpsnake.PlayerTest" time="0.001"/>
+  <testcase name="testPlayerInitialization" classname="tcpsnake.PlayerTest" time="0.017"/>
+  <testcase name="testInitialScore" classname="tcpsnake.PlayerTest" time="0.0"/>
   <testcase name="testPlayerIsInitiallyAlive" classname="tcpsnake.PlayerTest" time="0.001"/>
-  <testcase name="testPlayerHeadPosition" classname="tcpsnake.PlayerTest" time="0.0"/>
-  <testcase name="testSetBlind" classname="tcpsnake.PlayerTest" time="3.109"/>
+  <testcase name="testPlayerHeadPosition" classname="tcpsnake.PlayerTest" time="0.001"/>
+  <testcase name="testSetBlind" classname="tcpsnake.PlayerTest" time="3.107"/>
 </testsuite>
