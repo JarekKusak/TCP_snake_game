@@ -80,7 +80,6 @@ mvn compile exec:java -Dexec.mainClass=tcpsnake.Client \
 ```
 
 ## 7. Známé nedostatky
-- Neplatný vstup může způsobit zaseknutí konzole - Pokud hráč zmáčkne jinou klávesu než W, A, S, D nebo ESC, program nemusí správně reagovat.
 - Chybí podpora pro ukládání skóre - Po ukončení hry se skóre nezaznamenává nikam mimo aktuální běh programu.
 - Absence vizuálních efektů - Hra se zobrazuje v textovém režimu, což omezuje možnosti grafického zobrazení.
 - Lokalizace pouze v češtině - V současnosti není podpora pro více jazyků.
