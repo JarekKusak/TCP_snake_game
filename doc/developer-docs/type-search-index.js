@@ -1,1 +1,0 @@
-typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"tcpsnake","l":"Client"},{"p":"tcpsnake","l":"Common"},{"p":"tcpsnake","l":"Position"},{"p":"tcpsnake","l":"Server"}];updateSearchResults();

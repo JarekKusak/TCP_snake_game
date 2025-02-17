@@ -31,6 +31,10 @@ public class Server {
     private int rounds;
     private byte currentRound = 1;
 
+    private static final String SCORE_FILE = "highscores.txt";
+    private static Map<String, Integer> highScores = new HashMap<>();
+    private int[] totalScores = new int[MAX_PLAYERS]; // stores total scores across all rounds
+
     /**
      * Constructs a new Server instance.
      *
@@ -42,6 +46,9 @@ public class Server {
     public Server(int playerCount, int port, int rounds) throws IOException {
         this.rounds = rounds;
         this.serverSocket = new ServerSocket(port);
+
+        // load scores of players
+        loadHighScores();
 
         // initialize game matrix
         resetGameState();
@@ -69,7 +76,33 @@ public class Server {
         System.out.println("All players connected. Starting the game...");
     }
 
-    private int[] totalScores = new int[MAX_PLAYERS]; // stores total scores across all rounds
+    private static void loadHighScores() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(SCORE_FILE))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(":");
+                if (parts.length == 2) {
+                    highScores.put(parts[0], Integer.parseInt(parts[1]));
+                }
+            }
+            System.out.println("High scores loaded.");
+        } catch (IOException e) {
+            System.out.println("No high scores found. Starting fresh.");
+        }
+    }
+
+    public static void saveHighScore(String playerName, int score) {
+        highScores.put(playerName, score);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(SCORE_FILE))) {
+            for (Map.Entry<String, Integer> entry : highScores.entrySet()) {
+                writer.write(entry.getKey() + ":" + entry.getValue());
+                writer.newLine();
+            }
+            System.out.println("High scores saved.");
+        } catch (IOException e) {
+            System.err.println("Error saving high scores.");
+        }
+    }
 
     /**
      * Starts the game, including multiple rounds if specified.
@@ -102,6 +135,10 @@ public class Server {
 
             // send final game state to all players (now including the winner)
             broadcastGameState();
+
+            for (int i = 0; i < connectedPlayers; i++) {
+                saveHighScore(playerNames[i], totalScores[i]); // save score of each player
+            }
 
             System.out.println("Game over!");
         } catch (Exception e) {

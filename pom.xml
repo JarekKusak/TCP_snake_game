@@ -68,11 +68,10 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.10.1</version>
                 <configuration>
-                    <destDir>target/apidocs</destDir>
+                    <overview>${basedir}/src/main/javadoc/overview.html</overview>
                     <failOnError>false</failOnError>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 </project>

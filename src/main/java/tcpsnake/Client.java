@@ -51,7 +51,7 @@ public class Client {
         playerBlindness = new boolean[Common.MAX_PLAYERS];
         playerPositions = new Position[Common.MAX_PLAYERS];
         for (int i = 0; i < Common.MAX_PLAYERS; i++) {
-            playerPositions[i] = new Position(0, 0); // Defaultně nastavíme všechny hráče na (0,0)
+            playerPositions[i] = new Position(0, 0);
         }
     }
 
