@@ -18,6 +18,7 @@ public class Client {
     private byte[][] matrix = new byte[Common.MATRIX_SIZE][Common.MATRIX_SIZE];
     private byte roundStatus;
     private boolean invalidMove = false; // Flag to track invalid inputs
+    private boolean showHelp = false;
 
     private int playerId;
     private int connectedPlayers;
@@ -139,61 +140,70 @@ public class Client {
     }
 
     /**
-     * Renders the current state of the game matrix to the console, including borders and round information.
+     * Renders the current state of the game matrix, scoreboard, and optionally the help panel.
      */
     private void renderGame() {
-        // clear the console
         System.out.print("\033[H\033[2J");
         System.out.flush();
 
-        // display error message if last move was invalid
         if (invalidMove) {
             System.out.println("Invalid move. Use W, A, S, or D.");
         }
 
-        // display current round number in the format "Round X/Y"
         System.out.println("\nRound " + currentRound);
-
-        // print top border
         System.out.print("╔");
         for (int i = 0; i < Common.MATRIX_SIZE * 2; i++) {
             System.out.print("═");
         }
         System.out.println("╗");
 
-        // get player's position
-        Position playerHead = playerPositions[playerId];
+        int mapHeight = Common.MATRIX_SIZE;
+        String[] helpText = {
+                "=== 🕹 Game Controls 🕹 ===",
+                "W - Move up",
+                "A - Move left",
+                "S - Move down",
+                "D - Move right",
+                "H - Show help",
+                "ESC - Quit game",
+                "=========================="
+        };
 
-        // print game matrix with left and right borders
+        int helpHeight = helpText.length;
+        int paddingTop = (mapHeight - helpHeight) / 2;
+
         for (int y = 0; y < Common.MATRIX_SIZE; y++) {
-            System.out.print("║"); // left border
+            System.out.print("║");
             for (int x = 0; x < Common.MATRIX_SIZE; x++) {
                 String color = Common.RESET_COLOR;
                 char cell = (char) matrix[y][x];
 
-                // if the player is blinded, restrict their vision
-                if (playerBlindness[playerId] && !isNearPlayer(x, y, playerHead)) {
+                if (playerBlindness[playerId] && !isNearPlayer(x, y, playerPositions[playerId])) {
                     System.out.print("? ");
                     continue;
                 }
 
-                // assign colors to different players
                 switch (cell) {
-                    case 'X', 'x' -> color = Common.P1_COLOR; // Player 1 (red)
-                    case 'Y', 'y' -> color = Common.P2_COLOR; // Player 2 (blue)
-                    case 'Z', 'z' -> color = Common.P3_COLOR; // Player 3 (green)
-                    case 'W', 'w' -> color = Common.P4_COLOR; // Player 4 (yellow)
-                    case 'O' -> color = Common.FRUIT_COLOR; // yellow for normal fruit
-                    case '*' -> color = Common.SPECIAL_FRUIT_COLOR; // purple for special fruit
-                    case '&' -> color = Common.POWERUP_COLOR; // cyan for blindness power-up
+                    case 'X', 'x' -> color = Common.P1_COLOR;
+                    case 'Y', 'y' -> color = Common.P2_COLOR;
+                    case 'Z', 'z' -> color = Common.P3_COLOR;
+                    case 'W', 'w' -> color = Common.P4_COLOR;
+                    case 'O' -> color = Common.FRUIT_COLOR;
+                    case '*' -> color = Common.SPECIAL_FRUIT_COLOR;
+                    case '&' -> color = Common.POWERUP_COLOR;
                 }
-
                 System.out.print(color + cell + " " + Common.RESET_COLOR);
             }
-            System.out.println("║"); // right border
+            System.out.print("║");
+
+            // If the help flag is active, display the help panel beside the game
+            if (showHelp && y >= paddingTop && y < paddingTop + helpHeight) {
+                System.out.print("   " + helpText[y - paddingTop]);
+            }
+
+            System.out.println();
         }
 
-        // print bottom border
         System.out.print("╚");
         for (int i = 0; i < Common.MATRIX_SIZE * 2; i++) {
             System.out.print("═");
@@ -201,6 +211,21 @@ public class Client {
         System.out.println("╝");
 
         renderScoreboard();
+    }
+
+    /**
+     * Starts a thread to show help for 3 seconds and then hide it.
+     */
+    private void showHelp() {
+        showHelp = true;
+        new Thread(() -> {
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            showHelp = false;
+        }).start();
     }
 
     /**
@@ -236,7 +261,11 @@ public class Client {
         if (direction == 'W' || direction == 'A' || direction == 'S' || direction == 'D') {
             out.println(direction);
             invalidMove = false; // valid move, reset error flag
-        } else {
+        }
+        else if (direction == 'H') {
+            showHelp();
+        }
+        else {
             invalidMove = true; // invalid move detected
         }
     }

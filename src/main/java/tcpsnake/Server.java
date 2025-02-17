@@ -50,6 +50,8 @@ public class Server {
         // load scores of players
         loadHighScores();
 
+        showHighScores();
+
         // initialize game matrix
         resetGameState();
 
@@ -76,6 +78,38 @@ public class Server {
         System.out.println("All players connected. Starting the game...");
     }
 
+    /**
+     * Displays the top high scores stored in the file.
+     * If there are no scores recorded yet, it informs the players.
+     */
+    private static void showHighScores() {
+        System.out.println("=== 🏆 High Scores 🏆 ===");
+        if (highScores.isEmpty()) {
+            System.out.println("No high scores recorded yet.");
+        } else {
+            highScores.entrySet()
+                    .stream()
+                    .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue())) // Descending order
+                    .limit(5) // Show only top 5
+                    .forEach(entry -> System.out.println(entry.getKey() + ": " + entry.getValue() + " points"));
+        }
+        System.out.println("=========================");
+    }
+
+    /**
+     * Loads high scores from a file into the `highScores` map.
+     * If the file does not exist or cannot be read, initializes an empty high score list.
+     *
+     * The high scores are stored in a text file where each line follows the format:
+     * <pre>
+     * playerName:score
+     * </pre>
+     * Example:
+     * <pre>
+     * Alice:1500
+     * Bob:1200
+     * </pre>
+     */
     private static void loadHighScores() {
         try (BufferedReader reader = new BufferedReader(new FileReader(SCORE_FILE))) {
             String line;
@@ -91,6 +125,18 @@ public class Server {
         }
     }
 
+    /**
+     * Saves a player's high score to the `highScores` map and writes it to a file.
+     * If the player already has a recorded score, it will be updated with the new value.
+     *
+     * The file format remains consistent, storing scores in the format:
+     * <pre>
+     * playerName:score
+     * </pre>
+     *
+     * @param playerName The name of the player whose score is being saved.
+     * @param score The score achieved by the player.
+     */
     public static void saveHighScore(String playerName, int score) {
         highScores.put(playerName, score);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(SCORE_FILE))) {
