@@ -1,0 +1,3 @@
+player1:-40
+player2:20
+player3:-40

@@ -1,0 +1,18 @@
+Game Finished - 2025-02-17T14:34:41.117057
+player2 - Score: -30
+player2 - Score: 60
+---------------------------
+Game Finished - 2025-02-17T14:39:16.057200
+player2 - Score: -40
+player2 - Score: 0
+---------------------------
+Game Finished - 2025-02-17T14:40:26.034324
+player2 - Score: -40
+player2 - Score: 30
+player2 - Score: -40
+---------------------------
+Game Finished - 2025-02-17T14:41:21.007403
+player1 - Score: -40
+player2 - Score: 20
+player3 - Score: -40
+---------------------------

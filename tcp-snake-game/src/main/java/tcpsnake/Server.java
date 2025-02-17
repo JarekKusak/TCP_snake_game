@@ -297,7 +297,7 @@ public class Server {
 
                 // send player scores
                 for (int j = 0; j < connectedPlayers; j++) {
-                    outputStreams[i].writeInt(scores[j]);
+                    outputStreams[i].writeInt(totalScores[j]);
                 }
 
                 // send player positions (x, y)
